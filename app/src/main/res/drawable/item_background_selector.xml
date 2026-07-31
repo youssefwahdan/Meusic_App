@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Pressed state (finger down) -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/secondaryBackground"/> <!-- White with 20% opacity -->
+        </shape>
+    </item>
+
+    <!-- Selected/Focused state -->
+    <item android:state_selected="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/secondaryBackground"/> <!-- White with 13% opacity -->
+        </shape>
+    </item>
+
+    <!-- Default state (finger up) -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/primaryBackground"/> <!-- Transparent -->
+        </shape>
+    </item>
+</selector>

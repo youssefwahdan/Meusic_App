@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Custom Style for a specific type of button -->
+    <style name="CustomButtonStyle" parent="Widget.MaterialComponents.Button">
+        <item name="android:backgroundTint">#FF5722</item> <!-- Deep Orange -->
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:padding">16dp</item>
+        <item name="cornerRadius">24dp</item> <!-- Rounded corners -->
+    </style>
+    <!-- Custom Theme for specific screens -->
+    <style name="Theme.first_app.DarkBlue" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+<item name="windowActionBar">false</item>
+        <item name="android:textSize">18sp</item>
+        <!-- Change the global primary color (ActionBar, buttons, etc.) -->
+        <item name="colorPrimary">@color/primaryBackground</item>
+
+        <!-- Change the dark variant of the primary color (Status bar, etc.) -->
+        <item name="colorPrimaryDark">@color/primaryBackground</item>
+
+        <!-- Change the accent color (Floating action buttons, checkboxes, etc.) -->
+        <item name="colorAccent">#FF4081</item>
+
+        <!-- Change the background color of the whole screen -->
+        <item name="android:windowBackground">#000</item>
+        <item name="android:textColor">#FFF</item>
+    </style>
+</resources>

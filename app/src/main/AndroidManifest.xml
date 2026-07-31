@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- For Android 12 and below -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <!-- For Android 13 and above (Audio specific) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_music"
+        android:label="Meusic"
+        android:theme="@style/Theme.first_app.DarkBlue">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".AllSongsActivity"
+            android:exported="false"
+            android:label="@string/title_activity_all_songs"
+            android:theme="@style/Theme.first_app.DarkBlue"
+            android:windowSoftInputMode="adjustResize" />
+    </application>
+
+</manifest>
