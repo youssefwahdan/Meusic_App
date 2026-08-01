@@ -24,26 +24,35 @@
             android:id="@+id/main_constraint"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-
             >
 
             <LinearLayout
                 android:id="@+id/main_content"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                >
 
                 <include layout="@layout/toolbar" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/songs_recycler_view"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:paddingBottom="60dp" />
+                    android:layout_height="match_parent" />
 
             </LinearLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
-
+<!--<View-->
+<!--    android:id="@+id/some_text"-->
+<!--    android:layout_width="500dp"-->
+<!--    android:layout_height="400dp"-->
+<!--    android:text="Hello"-->
+<!--    android:backgroundTint="#FFFFFF"-->
+<!--    android:foregroundTint="#FFFFFF"-->
+<!--    android:textColorHighlight="#FFFFFF"-->
+<!--android:background="#FFFFFF"-->
+<!--    motion:layout_constraintBottom_toBottomOf="parent"-->
+<!--    />-->
             <include layout="@layout/activity_player" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_gravity="bottom"/>
     </androidx.constraintlayout.motion.widget.MotionLayout>
 
