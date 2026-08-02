@@ -29,6 +29,7 @@
             android:label="@string/title_activity_all_songs"
             android:theme="@style/Theme.first_app.DarkBlue"
             android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".SearchActivity" />
     </application>
 
 </manifest>

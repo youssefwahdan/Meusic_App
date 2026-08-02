@@ -27,10 +27,31 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
+    private static final int AUDIO_PERMISSION_REQUEST_CODE = 1001;
     protected Toolbar toolbar;
-    MotionLayout motionLayout;
+    private MotionLayout motionLayout;
+    private PlayerComponent playerComponent;
     private MenuAdapter adapter;
     private List<MenuItem> menuList;
+
+    private List<Song> songsList;
+    private final MusicLibrary.OnSongsLoadedListener songsListener = new MusicLibrary.OnSongsLoadedListener() {
+        @Override
+        public void onSongsLoaded(List<Song> songs) {
+            songsList = songs;
+            adapter.updateSongCount(songs.size());
+        }
+
+        @Override
+        public void onPermissionRequired(String permission) {
+            requestPermissions(new String[]{permission}, AUDIO_PERMISSION_REQUEST_CODE);
+        }
+
+        @Override
+        public void onError(String message) {
+            Toast.makeText(MainActivity.this, "Error: " + message, Toast.LENGTH_SHORT).show();
+        }
+    };
 
     // Background thread executor to prevent UI freezing
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -61,80 +82,23 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
 
+        // Initialize PlayerManager and PlayerComponent
+        PlayerManager.getInstance().init(this);
+        motionLayout = findViewById(R.id.music_player_motionLayout);
+        playerComponent = new PlayerComponent(motionLayout, PlayerManager.getInstance());
 
-//         1. Check and request permissions
-        checkAndRequestPermissions();
+        // Load songs (handles permissions + fetching + caching automatically)
+        MusicLibrary.getInstance().loadSongs(this, songsListener);
+        PlayerManager.getInstance().setQueue(MusicLibrary.getInstance().getSongs());
     }
 
-    // --- PERMISSION HANDLING ---
-    private final ActivityResultLauncher<String[]> requestPermissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
-                Boolean isGranted = result.get(
-                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                                ? Manifest.permission.READ_MEDIA_AUDIO
-                                : Manifest.permission.READ_EXTERNAL_STORAGE
-                );
-
-                if (Boolean.TRUE.equals(isGranted)) {
-                    fetchLocalSongs(); // Permission granted, fetch songs!
-                } else {
-                    Toast.makeText(this, "Permission denied. Cannot load songs.", Toast.LENGTH_SHORT).show();
-                }
-            });
-
-    private void checkAndRequestPermissions() {
-        String permission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                ? Manifest.permission.READ_MEDIA_AUDIO
-                : Manifest.permission.READ_EXTERNAL_STORAGE;
-
-        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
-            fetchLocalSongs(); // Already granted
-        } else {
-            requestPermissionLauncher.launch(new String[]{permission}); // Ask user
-        }
-    }
-
-    // --- FETCHING SONGS ---
-    private void fetchLocalSongs() {
-        // Run in background so the UI doesn't freeze
-        executor.execute(() -> {
-            int songCount = getActualSongCount();
-
-            // Switch back to Main Thread to update UI
-            runOnUiThread(() -> {
-                adapter.updateSongCount(songCount);
-            });
-        });
-    }
-
-    private int getActualSongCount() {
-        int count = 0;
-        Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-
-        // Only select actual music (filter out ringtones, notifications, etc.)
-        String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
-
-        // We only need to query one column to get the count
-        String[] projection = { MediaStore.Audio.Media._ID };
-
-        try (Cursor cursor = getContentResolver().query(uri, projection, selection, null, null)) {
-            if (cursor != null) {
-                count = cursor.getCount();
-                cursor.close();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return count;
-    }
     private void handleMenuClick(MenuItem item, int position) {
         // You can check which item was clicked by its position or its title
 
         switch (position) {
             case 0:
                 // "All songs" clicked
-                Toast.makeText(this, "Opening All Songs...", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(this, "Opening All Songs...", Toast.LENGTH_SHORT).show();
                  Intent intent = new Intent(this, AllSongsActivity.class);
                  startActivity(intent);
                 break;
