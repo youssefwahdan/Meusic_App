@@ -21,91 +21,46 @@ import jp.wasabeef.blurry.Blurry;
 /**
  * PlayerComponent
  *
- * A UI controller that binds a MotionLayout-based player view to the global PlayerManager.
- * Implements PlayerManager.PlayerStateListener to receive playback updates and reflect them
- * in the UI (title, artist, album art, play/pause state, and seek progress).
+ * UI binder that connects a MotionLayout player view to PlayerManager.
+ * - Updates title, artist, album art, play/pause icon, seekbar and time labels.
+ * - Handles user actions: play/pause, next, prev, seek, expand/collapse.
+ * - Loads embedded album art on a background thread and applies a blurred background.
  *
- * Responsibilities
- * - Initialize and cache view references from a MotionLayout container.
- * - Wire UI controls (play, next, prev, down, seekbar) to PlayerManager actions.
- * - Listen for PlayerManager callbacks and update UI accordingly:
- *     - onSongChanged: update title, artist, and album art.
- *     - onPlaybackStateChanged: update play/pause icon.
- *     - onProgressChanged: update seekbar and time labels.
- * - Load embedded album art off the main thread using MediaMetadataRetriever and post results
- *   back to the MotionLayout context. Apply a blurred background using the Blurry library.
- * - Register and unregister itself as a PlayerStateListener to avoid leaks.
+ * Public / lifecycle methods (what each does)
+ * - PlayerComponent(MotionLayout motionLayout, PlayerManager playerManager)
+ *     Constructor: finds views inside the MotionLayout, wires UI listeners,
+ *     registers as a PlayerStateListener, and initializes UI from current player state.
  *
- * Threading and lifecycle notes
- * - Album art extraction runs on a background thread; UI updates are posted to the MotionLayout
- *   via motionLayout.post(...) to ensure they run on the main thread.
- * - Call detach() from the hosting Activity or Fragment onDestroy (or equivalent) to remove
- *   the listener and avoid memory leaks.
- * - This component does not manage runtime permissions itself; ensure audio/media permissions
- *   are granted before attempting playback or metadata retrieval on older Android versions.
+ * - detach()
+ *     Unregister this component from PlayerManager to avoid memory leaks (call in onDestroy).
  *
- * UI behavior and interactions
- * - Play button toggles playback via playerManager.playPause().
- * - Prev/Next buttons call playerManager.prev() and playerManager.next().
- * - SeekBar:
- *     - Shows current and total duration (milliseconds).
- *     - User scrubbing updates the current time label while dragging and calls playerManager.seekTo()
- *       when the user stops dragging.
- * - Main container click expands the MotionLayout if it is collapsed (progress == 0f).
- * - Down button transitions the MotionLayout back to its start state.
+ * PlayerStateListener implementations (called by PlayerManager)
+ * - onSongChanged(Song song)
+ *     Update title and artist text, reset placeholder art, and start loading album art.
  *
- * Error handling
- * - Exceptions during metadata retrieval are caught and printed to log (e.printStackTrace()).
- * - If album art is not embedded or cannot be decoded, the component leaves the default
- *   placeholder (R.drawable.ic_music) in place.
+ * - onPlaybackStateChanged(boolean isPlaying)
+ *     Update the play/pause button icon to reflect current playback state.
  *
- * Dependencies and permissions
- * - Requires the Blurry library (jp.wasabeef:blurry) for background blur operations.
- * - Uses MediaMetadataRetriever to read embedded artwork from MediaStore URIs.
- * - Ensure READ_EXTERNAL_STORAGE or appropriate scoped storage access is available on Android
- *   versions that require it.
+ * - onProgressChanged(int currentMs, int totalMs)
+ *     Update seekBar max/progress and the current/total time labels.
  *
- * Expected view IDs inside the provided MotionLayout
- * - R.id.song_title
- * - R.id.song_artist
- * - R.id.album_art
- * - R.id.background_album_art
- * - R.id.play_btn
- * - R.id.prev_btn
- * - R.id.next_btn
- * - R.id.down_btn
- * - R.id.seek_bar
- * - R.id.current_time
- * - R.id.total_time
- * - R.id.main_container
+ * UI wiring and helpers
+ * - initViews()
+ *     Cache references to required views (title, artist, art, buttons, seekbar, times).
  *
- * Example usage
- *   // In Activity/Fragment after inflating layout with MotionLayout:
- *   MotionLayout motionLayout = findViewById(R.id.player_motion_layout);
- *   PlayerManager playerManager = PlayerManager.getInstance();
- *   PlayerComponent playerComponent = new PlayerComponent(motionLayout, playerManager);
+ * - setupListeners()
+ *     Attach click handlers for play/prev/next/down and a SeekBar listener that
+ *     updates the displayed time while dragging and calls playerManager.seekTo() on release.
  *
- *   // When Activity/Fragment is destroyed:
- *   @Override
- *   protected void onDestroy() {
- *       super.onDestroy();
- *       playerComponent.detach();
- *   }
- *
- * Extensibility suggestions
- * - Add an explicit permission check and request flow for audio/media access.
- * - Provide a callback interface for the host Activity/Fragment to react to expand/collapse events.
- * - Add placeholder handling and crossfade when switching album art bitmaps.
- * - Expose methods to programmatically expand/collapse the MotionLayout or update the queue UI.
+ * - loadAlbumArt(Song song)
+ *     Background thread: use MediaMetadataRetriever with a MediaStore Uri to extract
+ *     embedded artwork; post bitmap updates to the main thread and blur the background.
  *
  * Notes
- * - This component assumes PlayerManager has been initialized and may already have a current song.
- * - Keep UI updates minimal and efficient to avoid jank during frequent progress updates.
- *
- * @see PlayerManager
- * @see MediaMetadataRetriever
- * @see jp.wasabeef.blurry.Blurry
+ * - Call detach() when the host Activity/Fragment is destroyed.
+ * - Ensure required permissions are granted before metadata retrieval on older Android versions.
  */
+
 
 public class PlayerComponent implements PlayerManager.PlayerStateListener {
     private static final int AUDIO_PERMISSION_REQUEST_CODE = 1001;

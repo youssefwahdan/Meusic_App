@@ -18,99 +18,48 @@ import java.util.List;
 /**
  * MusicLibrary
  *
- * A singleton helper that discovers, caches, and serves audio files (Song objects)
- * from the device MediaStore. Designed to centralize permission handling, background
- * loading, and simple search functionality for music apps.
+ * Singleton that discovers, caches, and serves Song objects from MediaStore.
+ * - Handles permission checks, background loading, caching, and simple search.
  *
- * Responsibilities
- * - Provide a single shared instance via getInstance().
- * - Query MediaStore for audio files and build a cached list of Song objects.
- * - Handle runtime permission checks for audio/media access and notify callers when
- *   permission is required.
- * - Load songs on a background thread and deliver results on the main thread via
- *   OnSongsLoadedListener callbacks.
- * - Offer a simple in-memory search across title, artist, and album fields.
+ * Public methods (what each does)
+ * - getInstance()
+ *     Return the singleton MusicLibrary instance.
  *
- * Threading and lifecycle notes
- * - loadSongs(...) performs the heavy MediaStore query on a background thread.
- *   Results and error callbacks are posted to the main thread using a Handler.
- * - The class caches results in memory (songs list). Subsequent calls return cached
- *   data immediately if already loaded.
- * - If a permission is required, the listener is notified via onPermissionRequired(...)
- *   and the caller should request the permission from the user. After permission is
- *   granted, call onPermissionGranted(...) to continue loading.
+ * - getSongs()
+ *     Return the cached list of songs (modifiable list reference).
  *
- * Permissions and Android versions
- * - Uses READ_MEDIA_AUDIO on Android 33+ and READ_EXTERNAL_STORAGE on older versions.
- * - Caller must request and obtain the appropriate permission before calling loadSongs,
- *   or handle the onPermissionRequired callback to request it.
+ * - loadSongs(Context context, OnSongsLoadedListener listener)
+ *     Main entry: if cached data exists it returns it immediately via listener.
+ *     Otherwise it checks the required permission (READ_MEDIA_AUDIO on Android 33+,
+ *     READ_EXTERNAL_STORAGE on older versions). If permission is missing it calls
+ *     listener.onPermissionRequired(permission). If permission is granted it starts
+ *     a background thread to query MediaStore and posts results to listener.onSongsLoaded.
  *
- * Public API summary
- * - getInstance(): MusicLibrary
- * - getSongs(): List<Song>
- * - loadSongs(Context context, OnSongsLoadedListener listener): void
- *     - Checks permission, starts background fetch if needed, and returns results via listener.
- * - onPermissionGranted(Context context, OnSongsLoadedListener listener): void
- *     - Call after the user grants permission to resume loading.
- * - searchSongs(String query): List<Song>
- *     - Case-insensitive search across title, artist, and album. Returns an empty list
- *       for null/empty queries by default.
+ * - onPermissionGranted(Context context, OnSongsLoadedListener listener)
+ *     Call after the user grants permission; resets loaded state and calls loadSongs(...)
+ *     to continue loading.
  *
- * Listener callbacks (OnSongsLoadedListener)
- * - onSongsLoaded(List<Song> songs): invoked on the main thread when loading completes.
- * - onPermissionRequired(String permission): invoked when the required permission is not granted.
- * - onError(String message): invoked on the main thread if an exception occurs during loading.
+ * - searchSongs(String query)
+ *     Simple case-insensitive search across title, artist, and album. Returns an empty
+ *     list for null/empty queries by default.
  *
- * Implementation details
- * - fetchAllSongsFromDevice(Context): queries MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
- *   with projection fields: _ID, TITLE, ARTIST, ALBUM, DURATION, DATA.
- * - Only rows where IS_MUSIC != 0 are included.
- * - Results are sorted by TITLE ascending.
- * - The method maps cursor rows into Song instances and returns the list.
- * - The cursor is closed using try-with-resources to avoid leaks.
+ * Listener interface (callbacks)
+ * - OnSongsLoadedListener.onSongsLoaded(List<Song> songs)
+ * - OnSongsLoadedListener.onPermissionRequired(String permission)
+ * - OnSongsLoadedListener.onError(String message)
  *
- * Caching and state flags
- * - isLoading prevents concurrent fetches.
- * - isLoaded indicates whether the cache is populated; when true and songs is non-empty,
- *   loadSongs returns cached data immediately.
- * - onPermissionGranted resets isLoaded to false to force a fresh fetch after permission.
+ * Internal helpers
+ * - fetchAllSongsFromDevice(Context context)
+ *     Query MediaStore.Audio.Media.EXTERNAL_CONTENT_URI for rows where IS_MUSIC != 0,
+ *     map cursor rows to Song objects, and return the list. Uses try-with-resources to
+ *     close the cursor.
  *
- * Error handling
- * - Exceptions during fetching are caught and posted to the listener via onError.
- * - Query exceptions are printed to log (e.printStackTrace()) and do not crash the app.
- *
- * Usage example
- *   MusicLibrary.getInstance().loadSongs(context, new MusicLibrary.OnSongsLoadedListener() {
- *       @Override public void onSongsLoaded(List<Song> songs) // {update UI}
-        *       @Override public void onPermissionRequired(String permission) {
- *           // Request the permission from the user, then call onPermissionGranted(...)
- *       }
- *       @Override public void onError(String message) //{ show error }
- *   });
-         *
-         * After permission is granted (Activity/Fragment):
-        *   MusicLibrary.getInstance().onPermissionGranted(context, listener);
- *
-         * Extensibility suggestions
- * - Add pagination or incremental loading for very large libraries.
- * - Provide more advanced search (fuzzy matching, tokenized search).
-        * - Expose methods to refresh the cache, remove items, or observe changes via ContentObserver.
- * - Return immutable copies of the cached list to prevent external modification.
- * - Add sorting options (by artist, album, duration) and filtering (genre, year).
-        *
-        * Expected Song contract (required fields)
- * - long getId()  -> MediaStore _ID
- * - String getTitle()
- * - String getArtist()
- * - String getAlbum()
- * - long getDuration()
- * - String getData() (file path) — optional depending on how you play tracks (MediaStore URIs are preferred)
- *
-         * Notes
- * - For Android 10+ consider using MediaStore URIs (ContentUris.withAppendedId(...)) and scoped storage
- *   best practices rather than relying on file paths.
-        * - Keep UI updates lightweight when receiving onSongsLoaded because the list may be large.
+ * Notes
+ * - Results are loaded on a background thread and delivered on the main thread.
+ * - Caller must request permissions when onPermissionRequired is invoked.
+ * - Consider returning immutable copies of the cached list if external modification is a concern.
  */
+
 
 
 public class MusicLibrary {

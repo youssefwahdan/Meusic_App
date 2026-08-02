@@ -12,98 +12,74 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
-
 /**
  * PlayerManager
  *
- * A singleton audio playback manager for simple music player apps.
- * Designed to manage a queue of Song objects, control playback via MediaPlayer,
- * and notify UI components about state changes through PlayerStateListener callbacks.
+ * Simple singleton that controls audio playback using MediaPlayer.
+ * - Holds an application Context and a queue of Song objects.
+ * - Provides play, pause, next, previous, and seek controls.
+ * - Notifies registered PlayerStateListener instances about song changes,
+ *   playback state, and progress updates.
  *
- * Key responsibilities
- * - Maintain a single shared instance (thread-safe lazy initialization).
- * - Hold application Context (application-level) for safe MediaStore access.
- * - Create, prepare, start, pause, stop and release MediaPlayer instances.
- * - Maintain a playback queue and current index.
- * - Provide play / pause / next / previous / seek controls.
- * - Periodically publish playback progress to registered listeners on the main thread.
+ * Public methods (what each does)
+ * - getInstance()
+ *     Returns the singleton PlayerManager instance.
  *
- * Threading and lifecycle notes
- * - All UI notifications and progress updates are posted on the main Looper via a Handler.
- * - Call init(Context) early (for example in Application.onCreate or first Activity) to set an application Context.
- * - Always call releasePlayer() (or let the manager handle it) when the app or playback component is destroyed to free MediaPlayer resources.
- * - This class is not a full foreground service; if you need persistent playback while the app is backgrounded, integrate with a Service and MediaSession.
+ * - init(Context context)
+ *     Store the application context for safe MediaStore/URI access.
  *
- * Permissions and storage
- * - Uses MediaStore URIs built with ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id).
- * - Ensure READ_EXTERNAL_STORAGE (or scoped storage access) is granted where required on older Android versions.
+ * - setQueue(List<Song> currentQueue)
+ *     Replace the internal playback queue with the provided list.
  *
- * Usage example
- *   // initialize once (e.g., in Application)
- *   PlayerManager.getInstance().init(applicationContext);
+ * - addListener(PlayerStateListener listener)
+ *     Register a UI or component to receive playback callbacks.
  *
- *   // set queue and play a song
- *   List<Song> queue = ...;
- *   PlayerManager.getInstance().setQueue(queue);
- *   PlayerManager.getInstance().playSong(queue.get(0), queue);
+ * - removeListener(PlayerStateListener listener)
+ *     Unregister a previously added listener.
  *
- *   // listen for updates (UI component)
- *   PlayerManager.PlayerStateListener listener = new PlayerManager.PlayerStateListener() {
- *       @Override public void onSongChanged(Song song) //{ update UI}
-        *       @Override public void onPlaybackStateChanged(boolean isPlaying) //{ update play/pause button }
- *       @Override public void onProgressChanged(int currentMs, int totalMs) //{ update seekbar  }
- *   };
-         *   PlayerManager.getInstance().addListener(listener);
+ * - playSong(Song song, List<Song> newQueue)
+ *     Set the queue, set current index to the given song, prepare and start playback.
  *
-         * Public API summary
- * - getInstance(): PlayerManager
- * - init(Context context): void
- * - setQueue(List<Song> currentQueue): void
- * - playSong(Song song, List<Song> newQueue): void
- * - playPause(): void
- * - next(): void
- * - prev(): void
- * - seekTo(int positionMs): void
- * - isPlaying(): boolean
- * - getCurrentSong(): Song
- * - addListener(PlayerStateListener listener): void
- * - removeListener(PlayerStateListener listener): void
+ * - playPause()
+ *     Toggle playback: if no MediaPlayer exists it prepares the first song in the queue;
+ *     otherwise it pauses or resumes playback and updates progress updates.
  *
-         * Listener callbacks
- * - onSongChanged(Song song): called when the current song changes (after prepare/start).
-        * - onPlaybackStateChanged(boolean isPlaying): called when playback starts or pauses/stops.
- * - onProgressChanged(int currentMs, int totalMs): called periodically (approx. every second) while playing.
+ * - next()
+ *     Advance to the next song in the queue and start it (no-op at end of queue).
  *
-         * Implementation details and important behaviors
- * - prepareAndPlay(Song): releases any existing MediaPlayer, creates a new MediaPlayer,
-        *   sets AudioAttributes, sets data source using a MediaStore content Uri, prepares asynchronously,
- *   and starts playback in onPrepared.
- * - playPause(): if mediaPlayer is null and a queue exists, it prepares and plays the first item.
-        *   It toggles between pause and start and updates isPlaying and progress updates accordingly.
- * - next(): advances currentIndex and plays the next song if available.
- * - prev(): goes to previous song if available; otherwise seeks to start of current song.
- * - startProgressUpdate()/stopProgressUpdate(): manage a Runnable posted to the main Handler to call
- *   notifyProgress() every second while playing.
- * - notify* methods iterate registered listeners and call the appropriate callback on the main thread.
+ * - prev()
+ *     Go to the previous song if available; if at first song, seek to start.
  *
-         * Error handling
- * - Exceptions during prepare/setDataSource are caught and printed to log (e.printStackTrace()).
-        * - The class does not surface detailed error callbacks; consider adding an error listener if needed.
+ * - seekTo(int positionMs)
+ *     Seek the current track to the specified millisecond position and notify listeners.
  *
-         * Extensibility suggestions
- * - Add an error callback to PlayerStateListener for reporting MediaPlayer errors.
- * - Add shuffle/repeat modes and queue manipulation methods (add/remove/reorder).
-        * - Integrate with a foreground Service + MediaSession for robust background playback and lockscreen controls.
-        * - Persist queue and playback position if you need resume-after-restart behavior.
-        *
-        * Example Song contract (expected)
- * - Song should expose at least: long getId() (MediaStore id), String getTitle(), String getArtist(), int getDurationMs() (optional).
-        *
-        * @author
- *   Generated documentation
- * @since
- *   1.0
-*/
+ * - isPlaying()
+ *     Return whether playback is currently active.
+ *
+ * - getCurrentSong()
+ *     Return the currently selected Song or null if none.
+ *
+ * Internal helpers (brief)
+ * - prepareAndPlay(Song song)
+ *     Release any existing player, create and configure MediaPlayer, set data source
+ *     using a MediaStore content Uri, prepare asynchronously and start on prepared.
+ *
+ * - releasePlayer()
+ *     Stop progress updates, stop and release MediaPlayer, clear playing state.
+ *
+ * - startProgressUpdate() / stopProgressUpdate()
+ *     Manage a Runnable on the main Handler that calls listeners with current progress.
+ *
+ * Listener callbacks (PlayerStateListener)
+ * - onSongChanged(Song song)
+ * - onPlaybackStateChanged(boolean isPlaying)
+ * - onProgressChanged(int currentMs, int totalMs)
+ *
+ * Notes
+ * - Call init(...) early (e.g., Application.onCreate).
+ * - For background playback integrate with a Service / MediaSession.
+ */
+
 
 
 public class PlayerManager {
