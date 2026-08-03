@@ -1,59 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:motion="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-    <ImageView
-        android:id="@+id/back_btn"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_margin="16dp"
-        android:src="@drawable/ic_keyboard_arrow_up"
-        app:tint="@color/primaryForeground"
-        android:rotation="-90"
-
-        />
-    <androidx.cardview.widget.CardView
-        android:id="@+id/search_songs_input_container"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="@id/back_btn"
-        app:layout_constraintBottom_toBottomOf="@id/back_btn"
-        app:layout_constraintStart_toEndOf="@id/back_btn"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:elevation="0dp"
-        app:cardElevation="0dp"
-        android:background="#00000000"
-        android:backgroundTint="#00000000"
-        android:layout_marginEnd="16dp"
-        android:layout_marginStart="8dp"
-        app:cardCornerRadius="12dp"
+    android:layout_height="match_parent">
+    <androidx.constraintlayout.motion.widget.MotionLayout
+        android:id="@+id/music_player_motionLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layoutDescription="@xml/activity_player_scene"
+        motion:currentState="@id/start"
         >
-
-        <EditText
-            android:id="@+id/search_songs_input"
-            android:inputType="text"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/content"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:hint="Search by title, artist or album"
-            android:textColorHint="@color/secondaryForeground"
-            android:paddingVertical="8dp"
-            android:paddingHorizontal="14dp"
-            android:background="@color/secondaryBackground"
-            android:textSize="20sp"
-            />
-    </androidx.cardview.widget.CardView>
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/search_songs_recycler"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/back_btn"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="8dp"
-        />
-</androidx.constraintlayout.widget.ConstraintLayout>
+            >
+            <ImageView
+                android:id="@+id/back_btn"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_margin="16dp"
+                android:src="@drawable/ic_keyboard_arrow_up"
+                app:tint="@color/primaryForeground"
+                android:rotation="-90"
+
+                />
+            <androidx.cardview.widget.CardView
+                android:id="@+id/search_songs_input_container"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="@id/back_btn"
+                app:layout_constraintBottom_toBottomOf="@id/back_btn"
+                app:layout_constraintStart_toEndOf="@id/back_btn"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:elevation="0dp"
+                app:cardElevation="0dp"
+                android:background="#00000000"
+                android:backgroundTint="#00000000"
+                android:layout_marginEnd="16dp"
+                android:layout_marginStart="8dp"
+                app:cardCornerRadius="12dp"
+                >
+
+                <EditText
+                    android:id="@+id/search_songs_input"
+                    android:inputType="text"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:hint="Search by title, artist or album"
+                    android:textColorHint="@color/secondaryForeground"
+                    android:paddingVertical="8dp"
+                    android:paddingHorizontal="14dp"
+                    android:background="@color/secondaryBackground"
+                    android:textSize="20sp"
+                    />
+            </androidx.cardview.widget.CardView>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/search_songs_recycler"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                app:layout_constraintTop_toBottomOf="@id/back_btn"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:paddingTop="8dp"
+                android:clipToPadding="false"
+                android:paddingBottom="150dp"
+                />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+        <include
+            android:id="@+id/included"
+            layout="@layout/activity_player"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="bottom"/>
+    </androidx.constraintlayout.motion.widget.MotionLayout>
+</FrameLayout>

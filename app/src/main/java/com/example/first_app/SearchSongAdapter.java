@@ -4,6 +4,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
@@ -42,9 +44,19 @@ public class SearchSongAdapter extends RecyclerView.Adapter<SearchSongAdapter.Vi
         holder.artist.setText(song.getArtist());
         holder.album.setText(song.getAlbum());
 
+        if (position == songList.size() - 1) {
+            holder.divider.setVisibility(View.GONE);
+//            holder.itemView.setPadding(holder.itemView.getPaddingLeft(), holder.itemView.getPaddingTop(), holder.itemView.getPaddingRight(), 400);
+        }
 
+        // 4. Set the click listener on the whole row
         holder.itemView.setOnClickListener(v -> {
-            if (listener != null) listener.onSongClick(song);
+            if (listener != null) {
+                int pos = holder.getAdapterPosition();
+                if (pos != RecyclerView.NO_POSITION) {
+                    listener.onSongClick(songList.get(pos));
+                }
+            }
         });
     }
 
@@ -55,11 +67,13 @@ public class SearchSongAdapter extends RecyclerView.Adapter<SearchSongAdapter.Vi
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView title, artist, album;
+        View divider;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.song_title); // Adjust IDs to match your item layout
             artist = itemView.findViewById(R.id.song_artist);
             album = itemView.findViewById(R.id.album_name);
+            divider = itemView.findViewById(R.id.song_divider);
         }
     }
 }

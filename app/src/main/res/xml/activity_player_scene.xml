@@ -57,7 +57,7 @@
             motion:layout_constraintBottom_toBottomOf="parent"
             motion:layout_constraintStart_toStartOf="parent"
             motion:layout_constraintEnd_toEndOf="parent"
-            android:alpha="0.3"
+            android:alpha="0"
             >
 <!--            <CustomAttribute motion:attributeName="radius" motion:customDimension="16dp" />-->
             <CustomAttribute
@@ -66,7 +66,7 @@
                 />
         </Constraint>
         <Constraint
-            android:id="@id/transparent_layer"
+            android:id="@id/transparent_layer_container"
             >
             <CustomAttribute motion:attributeName="radius" motion:customDimension="16dp" />
         </Constraint>

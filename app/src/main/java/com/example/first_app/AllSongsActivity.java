@@ -91,6 +91,16 @@ public class AllSongsActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onBackPressed() {
+        if (motionLayout.getProgress() > 0.0) {
+//            Toast.makeText(this, "player opened", Toast.LENGTH_SHORT).show();
+            motionLayout.transitionToStart();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         // 4. Prevent memory leaks by detaching the component

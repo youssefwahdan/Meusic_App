@@ -1,23 +1,11 @@
 package com.example.first_app;
 
-import android.Manifest;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.widget.Toast;
-
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.motion.widget.MotionLayout;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -34,11 +22,9 @@ public class MainActivity extends AppCompatActivity {
     private MenuAdapter adapter;
     private List<MenuItem> menuList;
 
-    private List<Song> songsList;
     private final MusicLibrary.OnSongsLoadedListener songsListener = new MusicLibrary.OnSongsLoadedListener() {
         @Override
         public void onSongsLoaded(List<Song> songs) {
-            songsList = songs;
             adapter.updateSongCount(songs.size());
         }
 
@@ -53,8 +39,6 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    // Background thread executor to prevent UI freezing
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -136,6 +120,24 @@ public class MainActivity extends AppCompatActivity {
                 getSupportActionBar().setDisplayShowHomeEnabled(true);
                 getSupportActionBar().setTitle("Library");
             }
+        }
+    }
+    @Override
+    public void onBackPressed() {
+        if (motionLayout.getProgress() > 0.0) {
+//            Toast.makeText(this, "player opened", Toast.LENGTH_SHORT).show();
+            motionLayout.transitionToStart();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // 4. Prevent memory leaks by detaching the component
+        if (playerComponent != null) {
+            playerComponent.detach();
         }
     }
 }

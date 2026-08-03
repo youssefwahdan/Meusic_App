@@ -1,7 +1,5 @@
 package com.example.first_app;
 
-import static androidx.core.app.ActivityCompat.requestPermissions;
-
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
@@ -11,11 +9,9 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.constraintlayout.motion.widget.MotionLayout;
 
-import java.util.List;
 
 import jp.wasabeef.blurry.Blurry;
 /**
@@ -63,8 +59,6 @@ import jp.wasabeef.blurry.Blurry;
 
 
 public class PlayerComponent implements PlayerManager.PlayerStateListener {
-    private static final int AUDIO_PERMISSION_REQUEST_CODE = 1001;
-
     private MotionLayout motionLayout;
     private PlayerManager playerManager;
 
@@ -72,20 +66,45 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener {
     private ImageView artView, bgArtView, playBtn, prevBtn, nextBtn, downBtn;
     private SeekBar seekBar;
 
-    private List<Song> songsList;
     public PlayerComponent(MotionLayout motionLayout, PlayerManager playerManager) {
         this.motionLayout = motionLayout;
         this.playerManager = playerManager;
 
         initViews();
         setupListeners();
-        songsList = MusicLibrary.getInstance().getSongs();
         // Start listening to global player state
         this.playerManager.addListener(this);
 
         // Initialize UI with current state (in case a song is already playing)
         onSongChanged(this.playerManager.getCurrentSong());
         onPlaybackStateChanged(this.playerManager.isPlaying());
+    }
+
+    public void disappear() {
+        titleText.setVisibility(View.GONE);
+        artistText.setVisibility(View.GONE);
+        artView.setVisibility(View.GONE);
+        bgArtView.setVisibility(View.GONE);
+        playBtn.setVisibility(View.GONE);
+        prevBtn.setVisibility(View.GONE);
+        nextBtn.setVisibility(View.GONE);
+        downBtn.setVisibility(View.GONE);
+        seekBar.setVisibility(View.GONE);
+        currentTime.setVisibility(View.GONE);
+        totalTime.setVisibility(View.GONE);
+    }
+    public void appear() {
+        titleText.setVisibility(View.VISIBLE);
+        artistText.setVisibility(View.VISIBLE);
+        artView.setVisibility(View.VISIBLE);
+        bgArtView.setVisibility(View.VISIBLE);
+        playBtn.setVisibility(View.VISIBLE);
+        prevBtn.setVisibility(View.VISIBLE);
+        nextBtn.setVisibility(View.VISIBLE);
+        downBtn.setVisibility(View.VISIBLE);
+        seekBar.setVisibility(View.VISIBLE);
+        currentTime.setVisibility(View.VISIBLE);
+        totalTime.setVisibility(View.VISIBLE);
     }
 
     private void initViews() {

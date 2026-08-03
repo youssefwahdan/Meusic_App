@@ -43,6 +43,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
 
         if (position == songList.size() - 1) {
             holder.divider.setVisibility(View.GONE);
+//            holder.itemView.setPadding(holder.itemView.getPaddingLeft(), holder.itemView.getPaddingTop(), holder.itemView.getPaddingRight(), 400);
         }
 
         // 4. Set the click listener on the whole row
