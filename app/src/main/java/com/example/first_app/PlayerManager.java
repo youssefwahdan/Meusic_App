@@ -2,86 +2,36 @@ package com.example.first_app;
 
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.Intent;
 import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.provider.MediaStore;
+import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
+
 /**
  * PlayerManager
  *
- * Simple singleton that controls audio playback using MediaPlayer.
+ * Singleton that controls audio playback using MediaPlayer.
  * - Holds an application Context and a queue of Song objects.
  * - Provides play, pause, next, previous, and seek controls.
- * - Notifies registered PlayerStateListener instances about song changes,
- *   playback state, and progress updates.
- *
- * Public methods (what each does)
- * - getInstance()
- *     Returns the singleton PlayerManager instance.
- *
- * - init(Context context)
- *     Store the application context for safe MediaStore/URI access.
- *
- * - setQueue(List<Song> currentQueue)
- *     Replace the internal playback queue with the provided list.
- *
- * - addListener(PlayerStateListener listener)
- *     Register a UI or component to receive playback callbacks.
- *
- * - removeListener(PlayerStateListener listener)
- *     Unregister a previously added listener.
- *
- * - playSong(Song song, List<Song> newQueue)
- *     Set the queue, set current index to the given song, prepare and start playback.
- *
- * - playPause()
- *     Toggle playback: if no MediaPlayer exists it prepares the first song in the queue;
- *     otherwise it pauses or resumes playback and updates progress updates.
- *
- * - next()
- *     Advance to the next song in the queue and start it (no-op at end of queue).
- *
- * - prev()
- *     Go to the previous song if available; if at first song, seek to start.
- *
- * - seekTo(int positionMs)
- *     Seek the current track to the specified millisecond position and notify listeners.
- *
- * - isPlaying()
- *     Return whether playback is currently active.
- *
- * - getCurrentSong()
- *     Return the currently selected Song or null if none.
- *
- * Internal helpers (brief)
- * - prepareAndPlay(Song song)
- *     Release any existing player, create and configure MediaPlayer, set data source
- *     using a MediaStore content Uri, prepare asynchronously and start on prepared.
- *
- * - releasePlayer()
- *     Stop progress updates, stop and release MediaPlayer, clear playing state.
- *
- * - startProgressUpdate() / stopProgressUpdate()
- *     Manage a Runnable on the main Handler that calls listeners with current progress.
- *
- * Listener callbacks (PlayerStateListener)
- * - onSongChanged(Song song)
- * - onPlaybackStateChanged(boolean isPlaying)
- * - onProgressChanged(int currentMs, int totalMs)
- *
- * Notes
- * - Call init(...) early (e.g., Application.onCreate).
- * - For background playback integrate with a Service / MediaSession.
+ * - Manages Audio Focus (pauses on calls/other apps, stops other apps when playing).
+ * - Manages MediaSession (enables system notification & Huawei Quick Settings controls).
+ * - Manages WakeLock (prevents the device from sleeping during playback).
+ * - Notifies registered PlayerStateListener instances about song changes, playback state, and progress.
  */
-
-
-
 public class PlayerManager {
     private static PlayerManager instance;
     private Context appContext;
@@ -93,8 +43,13 @@ public class PlayerManager {
     private Handler handler = new Handler(Looper.getMainLooper());
     private Runnable updateProgressRunnable;
 
-    // Listeners for UI updates
-    private List<PlayerStateListener> listeners = new ArrayList<>();
+    // --- NEW: Audio & System Components ---
+    private AudioManager audioManager;
+    private AudioFocusRequest audioFocusRequest;
+    private MediaSessionCompat mediaSession;
+    private PowerManager.WakeLock wakeLock;
+
+    private final List<PlayerStateListener> listeners = new ArrayList<>();
 
     public interface PlayerStateListener {
         void onSongChanged(Song song);
@@ -111,10 +66,14 @@ public class PlayerManager {
         return instance;
     }
 
-    // Initialize with Application Context to safely access MediaStore URIs
     public void init(Context context) {
         if (appContext == null) {
             this.appContext = context.getApplicationContext();
+
+            // --- NEW: Initialize System Components ---
+            this.audioManager = (AudioManager) appContext.getSystemService(Context.AUDIO_SERVICE);
+            setupMediaSession();
+            setupWakeLock();
         }
     }
 
@@ -122,14 +81,17 @@ public class PlayerManager {
         this.queue = currentQueue;
     }
 
-
-
     public void addListener(PlayerStateListener listener) {
         if (!listeners.contains(listener)) listeners.add(listener);
     }
 
     public void removeListener(PlayerStateListener listener) {
         listeners.remove(listener);
+    }
+
+    // --- NEW: Required for MediaStyle Notification ---
+    public MediaSessionCompat.Token getSessionToken() {
+        return mediaSession != null ? mediaSession.getSessionToken() : null;
     }
 
     public void playSong(Song song, List<Song> newQueue) {
@@ -140,29 +102,40 @@ public class PlayerManager {
 
     public void playPause() {
         if (mediaPlayer == null) {
-            if (this.queue == null) {
-                Toast.makeText(appContext, "There is no songs", Toast.LENGTH_LONG ).show();
+            if (this.queue == null || this.queue.isEmpty()) {
+                Toast.makeText(appContext, "There are no songs", Toast.LENGTH_LONG).show();
                 return;
             } else {
-                prepareAndPlay(this.queue.get(0));
-                isPlaying = true;
-                startProgressUpdate();
+//                int startIndex = (currentIndex >= 0 && currentIndex < queue.size()) ? currentIndex : 0;
+currentIndex = 0;
+                prepareAndPlay(this.queue.get(currentIndex));
+                return; // prepareAndPlay handles isPlaying, progress, and notifications
             }
-        };
+        }
+
         if (isPlaying) {
             mediaPlayer.pause();
             isPlaying = false;
             stopProgressUpdate();
+            releaseWakeLock();
         } else {
-            mediaPlayer.start();
-            isPlaying = true;
-            startProgressUpdate();
+            if (requestAudioFocus()) {
+                mediaPlayer.start();
+                isPlaying = true;
+                acquireWakeLock();
+                startProgressUpdate();
+            }
         }
+        updateMediaSessionState();
         notifyPlaybackState();
+        updateServiceNotification();
     }
 
     public void next() {
-        if (queue == null || currentIndex >= queue.size() - 1) return;
+        if (queue == null || currentIndex >= queue.size() - 1) {
+            releasePlayer();
+            return;
+        }
         currentIndex++;
         prepareAndPlay(queue.get(currentIndex));
     }
@@ -180,6 +153,7 @@ public class PlayerManager {
     public void seekTo(int positionMs) {
         if (mediaPlayer != null) {
             mediaPlayer.seekTo(positionMs);
+            updateMediaSessionState();
             notifyProgress();
         }
     }
@@ -189,6 +163,13 @@ public class PlayerManager {
 
     private void prepareAndPlay(Song song) {
         releasePlayer();
+
+        // --- NEW: Request Audio Focus before playing ---
+        if (!requestAudioFocus()) {
+            Toast.makeText(appContext, "Audio focus not granted", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         try {
             mediaPlayer = new MediaPlayer();
             mediaPlayer.setAudioAttributes(
@@ -197,27 +178,36 @@ public class PlayerManager {
                             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                             .build()
             );
+            // --- NEW: Fallback WakeLock for older devices ---
+            mediaPlayer.setWakeMode(appContext, PowerManager.PARTIAL_WAKE_LOCK);
 
-            // Use Context and Uri to safely handle Android 10+ Scoped Storage
             Uri trackUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song.getId());
             mediaPlayer.setDataSource(appContext, trackUri);
 
             mediaPlayer.setOnPreparedListener(mp -> {
                 mp.start();
                 isPlaying = true;
+                acquireWakeLock();
+
+                // --- NEW: Update MediaSession for Notifications/Quick Settings ---
+                updateMediaSessionMetadata(song);
+                updateMediaSessionState();
+
                 notifySongChanged();
                 notifyPlaybackState();
                 startProgressUpdate();
+                updateServiceNotification();
             });
 
             mediaPlayer.setOnCompletionListener(mp -> next()); // Auto-play next
             mediaPlayer.prepareAsync();
         } catch (Exception e) {
             e.printStackTrace();
+            releasePlayer();
         }
     }
 
-    private void releasePlayer() {
+    public void releasePlayer() {
         stopProgressUpdate();
         if (mediaPlayer != null) {
             try { if (mediaPlayer.isPlaying()) mediaPlayer.stop(); } catch (Exception ignored) {}
@@ -225,15 +215,147 @@ public class PlayerManager {
             mediaPlayer = null;
         }
         isPlaying = false;
+
+        // --- NEW: Cleanup System Components ---
+        abandonAudioFocus();
+        releaseWakeLock();
+        stopService();
+        notifyPlaybackState();
     }
 
+    // ==========================================
+    // 1. AUDIO FOCUS MANAGEMENT
+    // ==========================================
+    private boolean requestAudioFocus() {
+        if (audioManager == null) return true;
+        AudioAttributes attributes = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            audioFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                    .setAudioAttributes(attributes)
+                    .setOnAudioFocusChangeListener(audioFocusChangeListener)
+                    .build();
+            return audioManager.requestAudioFocus(audioFocusRequest) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
+        } else {
+            return audioManager.requestAudioFocus(audioFocusChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
+        }
+    }
+
+    private void abandonAudioFocus() {
+        if (audioManager == null) return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && audioFocusRequest != null) {
+            audioManager.abandonAudioFocusRequest(audioFocusRequest);
+        } else {
+            audioManager.abandonAudioFocus(audioFocusChangeListener);
+        }
+    }
+
+    private final AudioManager.OnAudioFocusChangeListener audioFocusChangeListener = focusChange -> {
+        switch (focusChange) {
+            case AudioManager.AUDIOFOCUS_GAIN:
+                if (mediaPlayer != null) mediaPlayer.setVolume(1.0f, 1.0f);
+                break;
+            case AudioManager.AUDIOFOCUS_LOSS:
+                // Another app wants to play permanently (e.g., Spotify). WE MUST STOP.
+                if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+                    mediaPlayer.pause();
+                    isPlaying = false;
+                    notifyPlaybackState();
+                    updateMediaSessionState();
+                    updateServiceNotification();
+                }
+                abandonAudioFocus();
+                break;
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                // Temporary loss (e.g., Phone call). PAUSE.
+                if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+                    mediaPlayer.pause();
+                    isPlaying = false;
+                    notifyPlaybackState();
+                    updateMediaSessionState();
+                    updateServiceNotification();
+                }
+                break;
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                // Temporary loss where we can just lower volume (e.g., Navigation).
+                if (mediaPlayer != null) mediaPlayer.setVolume(0.2f, 0.2f);
+                break;
+        }
+    };
+
+    // ==========================================
+    // 2. MEDIA SESSION (For Notification & Huawei OS)
+    // ==========================================
+    private void setupMediaSession() {
+        mediaSession = new MediaSessionCompat(appContext, "MusicPlayerSession");
+        mediaSession.setActive(true);
+    }
+
+    private void updateMediaSessionMetadata(Song song) {
+        if (mediaSession == null || song == null) return;
+        MediaMetadataCompat metadata = new MediaMetadataCompat.Builder()
+                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, song.getTitle())
+                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, song.getArtist())
+                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, song.getAlbum())
+                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, song.getDuration())
+                .build();
+        mediaSession.setMetadata(metadata);
+    }
+
+    private void updateMediaSessionState() {
+        if (mediaSession == null) return;
+        int state = isPlaying ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED;
+        long position = mediaPlayer != null ? mediaPlayer.getCurrentPosition() : 0;
+
+        PlaybackStateCompat playbackState = new PlaybackStateCompat.Builder()
+                .setState(state, position, 1.0f)
+                .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE |
+                        PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
+                        PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS | PlaybackStateCompat.ACTION_STOP)
+                .build();
+        mediaSession.setPlaybackState(playbackState);
+    }
+
+    // ==========================================
+    // 3. WAKE LOCK & SERVICE MANAGEMENT
+    // ==========================================
+    private void setupWakeLock() {
+        PowerManager pm = (PowerManager) appContext.getSystemService(Context.POWER_SERVICE);
+        if (pm != null) {
+            wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyApp::MusicWakeLock");
+        }
+    }
+
+    private void acquireWakeLock() {
+        if (wakeLock != null && !wakeLock.isHeld()) wakeLock.acquire(10 * 60 * 1000L /*10 mins*/);
+    }
+
+    private void releaseWakeLock() {
+        if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
+    }
+
+    private void updateServiceNotification() {
+        Intent intent = new Intent(appContext, PlaybackService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            appContext.startForegroundService(intent);
+        } else {
+            appContext.startService(intent);
+        }
+    }
+
+    private void stopService() {
+        appContext.stopService(new Intent(appContext, PlaybackService.class));
+    }
+
+    // ==========================================
+    // 4. PROGRESS & LISTENERS
+    // ==========================================
     private void startProgressUpdate() {
-        updateProgressRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (mediaPlayer != null && isPlaying) notifyProgress();
-                handler.postDelayed(this, 1000);
-            }
+        updateProgressRunnable = () -> {
+            if (mediaPlayer != null && isPlaying) notifyProgress();
+            handler.postDelayed(updateProgressRunnable, 1000);
         };
         handler.post(updateProgressRunnable);
     }
@@ -242,14 +364,15 @@ public class PlayerManager {
         if (updateProgressRunnable != null) handler.removeCallbacks(updateProgressRunnable);
     }
 
-    // --- Notification Helpers ---
     private void notifySongChanged() {
         Song song = getCurrentSong();
         if (song != null) for (PlayerStateListener l : listeners) l.onSongChanged(song);
     }
+
     private void notifyPlaybackState() {
         for (PlayerStateListener l : listeners) l.onPlaybackStateChanged(isPlaying);
     }
+
     private void notifyProgress() {
         if (mediaPlayer != null) {
             int current = mediaPlayer.getCurrentPosition();

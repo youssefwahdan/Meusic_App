@@ -80,33 +80,6 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener {
         onPlaybackStateChanged(this.playerManager.isPlaying());
     }
 
-    public void disappear() {
-        titleText.setVisibility(View.GONE);
-        artistText.setVisibility(View.GONE);
-        artView.setVisibility(View.GONE);
-        bgArtView.setVisibility(View.GONE);
-        playBtn.setVisibility(View.GONE);
-        prevBtn.setVisibility(View.GONE);
-        nextBtn.setVisibility(View.GONE);
-        downBtn.setVisibility(View.GONE);
-        seekBar.setVisibility(View.GONE);
-        currentTime.setVisibility(View.GONE);
-        totalTime.setVisibility(View.GONE);
-    }
-    public void appear() {
-        titleText.setVisibility(View.VISIBLE);
-        artistText.setVisibility(View.VISIBLE);
-        artView.setVisibility(View.VISIBLE);
-        bgArtView.setVisibility(View.VISIBLE);
-        playBtn.setVisibility(View.VISIBLE);
-        prevBtn.setVisibility(View.VISIBLE);
-        nextBtn.setVisibility(View.VISIBLE);
-        downBtn.setVisibility(View.VISIBLE);
-        seekBar.setVisibility(View.VISIBLE);
-        currentTime.setVisibility(View.VISIBLE);
-        totalTime.setVisibility(View.VISIBLE);
-    }
-
     private void initViews() {
         titleText = motionLayout.findViewById(R.id.song_title);
         artistText = motionLayout.findViewById(R.id.song_artist);

@@ -8,12 +8,21 @@
 
     <!-- For Android 13 and above (Audio specific) -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" /> <!-- Required for Android 14+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- Required for Android 13+ -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" /> <!-- Prevents Huawei from killing the player -->
+
 
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_music"
         android:label="Meusic"
         android:theme="@style/Theme.first_app.DarkBlue">
+        <service
+            android:name=".PlaybackService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
