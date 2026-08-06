@@ -3,9 +3,12 @@ package com.example.first_app;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
@@ -21,17 +24,6 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * PlayerManager
- *
- * Singleton that controls audio playback using MediaPlayer.
- * - Holds an application Context and a queue of Song objects.
- * - Provides play, pause, next, previous, and seek controls.
- * - Manages Audio Focus (pauses on calls/other apps, stops other apps when playing).
- * - Manages MediaSession (enables system notification & Huawei Quick Settings controls).
- * - Manages WakeLock (prevents the device from sleeping during playback).
- * - Notifies registered PlayerStateListener instances about song changes, playback state, and progress.
- */
 public class PlayerManager {
     private static PlayerManager instance;
     private Context appContext;
@@ -43,11 +35,13 @@ public class PlayerManager {
     private Handler handler = new Handler(Looper.getMainLooper());
     private Runnable updateProgressRunnable;
 
-    // --- NEW: Audio & System Components ---
     private AudioManager audioManager;
     private AudioFocusRequest audioFocusRequest;
     private MediaSessionCompat mediaSession;
     private PowerManager.WakeLock wakeLock;
+
+    // Cache the current album art for the notification
+    private Bitmap currentAlbumArt;
 
     private final List<PlayerStateListener> listeners = new ArrayList<>();
 
@@ -60,39 +54,26 @@ public class PlayerManager {
     private PlayerManager() {}
 
     public static synchronized PlayerManager getInstance() {
-        if (instance == null) {
-            instance = new PlayerManager();
-        }
+        if (instance == null) instance = new PlayerManager();
         return instance;
     }
 
     public void init(Context context) {
         if (appContext == null) {
             this.appContext = context.getApplicationContext();
-
-            // --- NEW: Initialize System Components ---
             this.audioManager = (AudioManager) appContext.getSystemService(Context.AUDIO_SERVICE);
             setupMediaSession();
             setupWakeLock();
         }
     }
 
-    public void setQueue(List<Song> currentQueue) {
-        this.queue = currentQueue;
-    }
+    public void setQueue(List<Song> currentQueue) { this.queue = currentQueue; }
+    public void addListener(PlayerStateListener listener) { if (!listeners.contains(listener)) listeners.add(listener); }
+    public void removeListener(PlayerStateListener listener) { listeners.remove(listener); }
+    public MediaSessionCompat.Token getSessionToken() { return mediaSession != null ? mediaSession.getSessionToken() : null; }
 
-    public void addListener(PlayerStateListener listener) {
-        if (!listeners.contains(listener)) listeners.add(listener);
-    }
-
-    public void removeListener(PlayerStateListener listener) {
-        listeners.remove(listener);
-    }
-
-    // --- NEW: Required for MediaStyle Notification ---
-    public MediaSessionCompat.Token getSessionToken() {
-        return mediaSession != null ? mediaSession.getSessionToken() : null;
-    }
+    // NEW: Getter for the notification to use
+    public Bitmap getCurrentAlbumArt() { return currentAlbumArt; }
 
     public void playSong(Song song, List<Song> newQueue) {
         this.queue = newQueue;
@@ -106,10 +87,9 @@ public class PlayerManager {
                 Toast.makeText(appContext, "There are no songs", Toast.LENGTH_LONG).show();
                 return;
             } else {
-//                int startIndex = (currentIndex >= 0 && currentIndex < queue.size()) ? currentIndex : 0;
-currentIndex = 0;
+                currentIndex = 0;
                 prepareAndPlay(this.queue.get(currentIndex));
-                return; // prepareAndPlay handles isPlaying, progress, and notifications
+                return;
             }
         }
 
@@ -129,6 +109,7 @@ currentIndex = 0;
         updateMediaSessionState();
         notifyPlaybackState();
         updateServiceNotification();
+        refreshNotificationUI();
     }
 
     public void next() {
@@ -146,7 +127,7 @@ currentIndex = 0;
             currentIndex--;
             prepareAndPlay(queue.get(currentIndex));
         } else {
-            seekTo(0); // Restart current song if it's the first one
+            seekTo(0);
         }
     }
 
@@ -163,8 +144,6 @@ currentIndex = 0;
 
     private void prepareAndPlay(Song song) {
         releasePlayer();
-
-        // --- NEW: Request Audio Focus before playing ---
         if (!requestAudioFocus()) {
             Toast.makeText(appContext, "Audio focus not granted", Toast.LENGTH_SHORT).show();
             return;
@@ -172,13 +151,9 @@ currentIndex = 0;
 
         try {
             mediaPlayer = new MediaPlayer();
-            mediaPlayer.setAudioAttributes(
-                    new AudioAttributes.Builder()
-                            .setUsage(AudioAttributes.USAGE_MEDIA)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                            .build()
-            );
-            // --- NEW: Fallback WakeLock for older devices ---
+            mediaPlayer.setAudioAttributes(new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build());
             mediaPlayer.setWakeMode(appContext, PowerManager.PARTIAL_WAKE_LOCK);
 
             Uri trackUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song.getId());
@@ -189,7 +164,6 @@ currentIndex = 0;
                 isPlaying = true;
                 acquireWakeLock();
 
-                // --- NEW: Update MediaSession for Notifications/Quick Settings ---
                 updateMediaSessionMetadata(song);
                 updateMediaSessionState();
 
@@ -197,9 +171,10 @@ currentIndex = 0;
                 notifyPlaybackState();
                 startProgressUpdate();
                 updateServiceNotification();
+                refreshNotificationUI();
             });
 
-            mediaPlayer.setOnCompletionListener(mp -> next()); // Auto-play next
+            mediaPlayer.setOnCompletionListener(mp -> next());
             mediaPlayer.prepareAsync();
         } catch (Exception e) {
             e.printStackTrace();
@@ -215,17 +190,12 @@ currentIndex = 0;
             mediaPlayer = null;
         }
         isPlaying = false;
-
-        // --- NEW: Cleanup System Components ---
         abandonAudioFocus();
         releaseWakeLock();
         stopService();
         notifyPlaybackState();
     }
 
-    // ==========================================
-    // 1. AUDIO FOCUS MANAGEMENT
-    // ==========================================
     private boolean requestAudioFocus() {
         if (audioManager == null) return true;
         AudioAttributes attributes = new AudioAttributes.Builder()
@@ -258,7 +228,6 @@ currentIndex = 0;
                 if (mediaPlayer != null) mediaPlayer.setVolume(1.0f, 1.0f);
                 break;
             case AudioManager.AUDIOFOCUS_LOSS:
-                // Another app wants to play permanently (e.g., Spotify). WE MUST STOP.
                 if (mediaPlayer != null && mediaPlayer.isPlaying()) {
                     mediaPlayer.pause();
                     isPlaying = false;
@@ -269,7 +238,6 @@ currentIndex = 0;
                 abandonAudioFocus();
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                // Temporary loss (e.g., Phone call). PAUSE.
                 if (mediaPlayer != null && mediaPlayer.isPlaying()) {
                     mediaPlayer.pause();
                     isPlaying = false;
@@ -279,15 +247,11 @@ currentIndex = 0;
                 }
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-                // Temporary loss where we can just lower volume (e.g., Navigation).
                 if (mediaPlayer != null) mediaPlayer.setVolume(0.2f, 0.2f);
                 break;
         }
     };
 
-    // ==========================================
-    // 2. MEDIA SESSION (For Notification & Huawei OS)
-    // ==========================================
     private void setupMediaSession() {
         mediaSession = new MediaSessionCompat(appContext, "MusicPlayerSession");
         mediaSession.setActive(true);
@@ -295,13 +259,38 @@ currentIndex = 0;
 
     private void updateMediaSessionMetadata(Song song) {
         if (mediaSession == null || song == null) return;
-        MediaMetadataCompat metadata = new MediaMetadataCompat.Builder()
+
+        // Fetch and SCALE DOWN the album art (Critical for notifications)
+        currentAlbumArt = getAlbumArtBitmap(song);
+
+        MediaMetadataCompat.Builder builder = new MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, song.getTitle())
                 .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, song.getArtist())
                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, song.getAlbum())
-                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, song.getDuration())
-                .build();
-        mediaSession.setMetadata(metadata);
+                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, song.getDuration());
+
+        if (currentAlbumArt != null) {
+            builder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, currentAlbumArt);
+            builder.putBitmap(MediaMetadataCompat.METADATA_KEY_ART, currentAlbumArt);
+        }
+        mediaSession.setMetadata(builder.build());
+    }
+
+    private Bitmap getAlbumArtBitmap(Song song) {
+        try {
+            Uri trackUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song.getId());
+            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+            retriever.setDataSource(appContext, trackUri);
+            byte[] art = retriever.getEmbeddedPicture();
+            if (art != null) {
+                Bitmap bitmap = BitmapFactory.decodeByteArray(art, 0, art.length);
+                // SCALE DOWN to 256x256. Notifications will silently reject huge bitmaps!
+                return Bitmap.createScaledBitmap(bitmap, 256, 256, true);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     private void updateMediaSessionState() {
@@ -318,18 +307,13 @@ currentIndex = 0;
         mediaSession.setPlaybackState(playbackState);
     }
 
-    // ==========================================
-    // 3. WAKE LOCK & SERVICE MANAGEMENT
-    // ==========================================
     private void setupWakeLock() {
         PowerManager pm = (PowerManager) appContext.getSystemService(Context.POWER_SERVICE);
-        if (pm != null) {
-            wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyApp::MusicWakeLock");
-        }
+        if (pm != null) wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyApp::MusicWakeLock");
     }
 
     private void acquireWakeLock() {
-        if (wakeLock != null && !wakeLock.isHeld()) wakeLock.acquire(10 * 60 * 1000L /*10 mins*/);
+        if (wakeLock != null && !wakeLock.isHeld()) wakeLock.acquire(10 * 60 * 1000L);
     }
 
     private void releaseWakeLock() {
@@ -344,14 +328,21 @@ currentIndex = 0;
             appContext.startService(intent);
         }
     }
+    public void refreshNotificationUI() {
+        // This tells the service to rebuild the RemoteViews with the latest data
+        Intent intent = new Intent(appContext, PlaybackService.class);
+        intent.setAction("UPDATE_UI");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            appContext.startForegroundService(intent);
+        } else {
+            appContext.startService(intent);
+        }
+    }
 
     private void stopService() {
         appContext.stopService(new Intent(appContext, PlaybackService.class));
     }
 
-    // ==========================================
-    // 4. PROGRESS & LISTENERS
-    // ==========================================
     private void startProgressUpdate() {
         updateProgressRunnable = () -> {
             if (mediaPlayer != null && isPlaying) notifyProgress();

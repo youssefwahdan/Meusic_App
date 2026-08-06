@@ -140,7 +140,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:tint="#FFFFFF" />
+        />
 
     <!-- 1. SeekBar -->
     <SeekBar
@@ -191,7 +191,7 @@
         app:layout_constraintBottom_toBottomOf="@id/play_btn"
         app:layout_constraintEnd_toStartOf="@id/play_btn"
         app:layout_constraintTop_toTopOf="@id/play_btn"
-        app:tint="#FFFFFF" />
+       />
 
     <!-- 6. Next Button -->
     <ImageView
@@ -204,7 +204,7 @@
         app:layout_constraintBottom_toBottomOf="@id/play_btn"
         app:layout_constraintStart_toEndOf="@id/play_btn"
         app:layout_constraintTop_toTopOf="@id/play_btn"
-        app:tint="#FFFFFF" />
+       />
 
     <!-- 5. down Arrow -->
 
