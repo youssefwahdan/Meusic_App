@@ -6,9 +6,11 @@
     android:viewportWidth="24">
     <path
         android:fillColor="#ffffffff"
-        android:pathData="M6 19h 4V 5H 6v 14z m8,-14v 14h 4V 5h -4z"
+        android:pathData="M6 17.5 c 0, 0 0, 1.5 1.5,1.5 h 2.5V 6.5 c 0, 0 0, -1.5 -1.5,-1.5 H 6v 14z m8,-14 v 14 c 0,0 0,1.5 1.5,1.5 h2.5V 6.5 c 0,0 0,-1.5 -1.5,-1.5 h -2.5z"
 
         />
+    <!--        android:pathData="M6 5 l4 0 l0 14 l-4 0 l 0 -14z m8 0 l4 0 l0 14 l-4 0 l0 -14z"-->
+
     <!--        android:pathData="M6 19h 4 C 10 5, 10 5, 6 5 v 14z m8,-14v 14h 4V 5h -4z"-->
 
 </vector>
