@@ -4,8 +4,13 @@
     <item
         android:id="@+id/action_search"
         android:icon="@drawable/ic_search"
-        android:iconTint="@color/primaryForeground"
         android:title="Search"
         app:showAsAction="ifRoom"
+        />
+    <item
+        android:id="@+id/action_sort"
+        android:icon="@drawable/ic_sort"
+        app:showAsAction="ifRoom"
+        android:title="Sort"
         />
 </menu>

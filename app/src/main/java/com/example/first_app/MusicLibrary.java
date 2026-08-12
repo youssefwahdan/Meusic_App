@@ -155,7 +155,8 @@ public class MusicLibrary {
                 MediaStore.Audio.Media.ARTIST,
                 MediaStore.Audio.Media.ALBUM,
                 MediaStore.Audio.Media.DURATION,
-                MediaStore.Audio.Media.DATA
+                MediaStore.Audio.Media.DATA,
+                MediaStore.Audio.Media.DATE_ADDED
         };
 
         try (Cursor cursor = context.getContentResolver().query(uri, projection, selection, null, sortOrder)) {
@@ -166,6 +167,7 @@ public class MusicLibrary {
                 int albumCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM);
                 int durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION);
                 int dataCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
+                int dateAddedCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED);
 
                 while (cursor.moveToNext()) {
                     songList.add(new Song(
@@ -174,7 +176,8 @@ public class MusicLibrary {
                             cursor.getString(artistCol),
                             cursor.getString(albumCol),
                             cursor.getLong(durationCol),
-                            cursor.getString(dataCol)
+                            cursor.getString(dataCol),
+                            cursor.getString(dateAddedCol)
                     ));
                 }
             }
