@@ -10,7 +10,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
+
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,11 +70,26 @@ public class MusicLibrary {
     private final List<Song> songs = new ArrayList<>();
     private boolean isLoading = false;
     private boolean isLoaded = false;
+    private int currentSortIndex = 0;
+
 
     public interface OnSongsLoadedListener {
         void onSongsLoaded(List<Song> songs);
         void onPermissionRequired(String permission);
         void onError(String message);
+    }
+    public interface OnSongsSortedListener {
+        void onSongsSorted();
+    }
+
+    private final List<OnSongsSortedListener> sortListeners = new ArrayList<>();
+
+    public void addSortListener(OnSongsSortedListener listener) {
+        if (!sortListeners.contains(listener)) sortListeners.add(listener);
+    }
+
+    public void removeSortListener(OnSongsSortedListener listener) {
+        sortListeners.remove(listener);
     }
 
     private MusicLibrary() {}
@@ -205,5 +223,84 @@ public class MusicLibrary {
             }
         }
         return filteredList;
+    }
+
+    public void sortSongs(int option) {
+        switch (option) {
+            case 0: // Title (A - Z)
+                songs.sort((s1, s2) -> s1.getTitle().compareToIgnoreCase(s2.getTitle()));
+                break;
+            case 1: // Title (Z - A)
+                songs.sort((s1, s2) -> s2.getTitle().compareToIgnoreCase(s1.getTitle()));
+                break;
+            case 2: // Artist (A - Z)
+                songs.sort((s1, s2) -> s1.getArtist().compareToIgnoreCase(s2.getArtist()));
+                break;
+            case 3: // Artist (Z - A)
+                songs.sort((s1, s2) -> s2.getArtist().compareToIgnoreCase(s1.getArtist()));
+                break;
+            case 4: // Album (A - Z)
+                songs.sort((s1, s2) -> s1.getAlbum().compareToIgnoreCase(s2.getAlbum()));
+                break;
+            case 5: // Album (Z - A)
+                songs.sort((s1, s2) -> s2.getAlbum().compareToIgnoreCase(s1.getAlbum()));
+                break;
+            case 6: // Duration (Shortest first)
+                songs.sort((s1, s2) -> Long.compare(s1.getDuration(), s2.getDuration()));
+                break;
+            case 7: // Duration (Longest first)
+                songs.sort((s1, s2) -> Long.compare(s2.getDuration(), s1.getDuration()));
+                break;
+            case 8: // Date Added ASC
+                songs.sort((s1, s2) -> s1.getDate().compareToIgnoreCase(s2.getDate()));
+                break;
+            case 9: // Date Added DESC
+                songs.sort((s1, s2) -> s2.getDate().compareToIgnoreCase(s1.getDate()));
+                break;
+        }
+
+        // Notify all fragments that the list has been sorted
+        for (OnSongsSortedListener listener : sortListeners) {
+            listener.onSongsSorted();
+        }
+    }
+    public void showSortDialog(Context context) {
+        String[] sortOptions = {
+                "Title (A - Z)",
+                "Title (Z - A)",
+                "Artist (A - Z)",
+                "Artist (Z - A)",
+                "Album (A - Z)",
+                "Album (Z - A)",
+                "Duration (Shortest first)",
+                "Duration (Longest first)",
+                "Date Added ASC",
+                "Date Added DESC"
+        };
+
+        // 1. Create the Builder
+        AlertDialog.Builder builder = new AlertDialog.Builder(context)
+                .setTitle("Sort Songs By")
+                .setSingleChoiceItems(sortOptions, currentSortIndex, (dialog, which) -> {
+                    currentSortIndex = which;
+                    sortSongs(which);
+                    dialog.dismiss();
+                });
+//                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        // 2. Create the Dialog object
+        AlertDialog dialog = builder.create();
+        // 3. Apply the rounded background
+        dialog.getWindow().setBackgroundDrawableResource(R.drawable.rounded_dialog_bg);
+        // 4. Show the dialog
+        dialog.show();
+        // 1. Get the screen width
+        int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
+
+        // 2. Calculate the dialog width (e.g., 0.90 = 90% of the screen)
+        int dialogWidth = (int) (screenWidth * 0.80);
+
+        // 3. Apply the width and set height to wrap content
+        dialog.getWindow().setLayout(dialogWidth, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
     }
 }

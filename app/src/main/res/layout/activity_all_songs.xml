@@ -28,13 +28,24 @@
 
                 <include layout="@layout/toolbar" />
 
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/songs_recycler_view"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:clipToPadding="false"
-                        android:paddingBottom="150dp"
-                        />
+                <!-- 1. The Tabs -->
+                <com.google.android.material.tabs.TabLayout
+                    android:id="@+id/tab_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:tabMode="fixed"
+                    app:tabGravity="fill"
+                    android:background="@color/secondaryBackground"
+                    app:tabTextColor="@color/secondaryForeground"
+                    app:tabSelectedTextColor="@color/primaryForeground"
+                    app:tabIndicatorColor="@color/primaryForeground" />
+
+                <!-- 2. The Swipeable Content Area -->
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/view_pager"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
 
             </LinearLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
