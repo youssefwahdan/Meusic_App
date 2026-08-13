@@ -34,11 +34,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:tabMode="fixed"
-                    app:tabGravity="fill"
-                    android:background="@color/secondaryBackground"
+                    app:tabGravity="center"
+                    android:background="@color/primaryBackground"
                     app:tabTextColor="@color/secondaryForeground"
-                    app:tabSelectedTextColor="@color/primaryForeground"
-                    app:tabIndicatorColor="@color/primaryForeground" />
+                    app:tabSelectedTextColor="@color/primary"
+                    app:tabIndicatorColor="@color/primary"
+                    motion:tabIndicatorHeight="4dp"
+                    motion:tabIndicatorFullWidth="false"
+                    motion:tabIndicatorAnimationMode="elastic"
+                    />
 
                 <!-- 2. The Swipeable Content Area -->
                 <androidx.viewpager2.widget.ViewPager2

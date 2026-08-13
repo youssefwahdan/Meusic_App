@@ -1,5 +1,6 @@
 package com.example.first_app;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
@@ -13,7 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AllArtistsFragment extends Fragment {
+public class AllArtistsFragment extends Fragment implements MusicLibrary.OnSongsSortedListener {
 
     private RecyclerView recyclerView;
     private ArtistAdapter adapter;
@@ -25,6 +26,8 @@ public class AllArtistsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        MusicLibrary.getInstance().addSortListener(this);
 
         recyclerView = view.findViewById(R.id.artists_recycler_view);
 
@@ -70,10 +73,26 @@ public class AllArtistsFragment extends Fragment {
 
         // 4. Set Adapter
         adapter = new ArtistAdapter(artistList, artist -> {
-            // When an artist is clicked, play all their songs
-            PlayerManager.getInstance().playSong(artist.getSongs().get(0), artist.getSongs());
+            Intent intent = new Intent(requireContext(), DetailSongsActivity.class);
+            intent.putExtra(DetailSongsActivity.EXTRA_TYPE, "ARTIST");
+            intent.putExtra(DetailSongsActivity.EXTRA_NAME, artist.getName());
+            startActivity(intent);
         });
 
         recyclerView.setAdapter(adapter);
+    }
+    @Override
+    public void onSongsSorted() {
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+            loadArtists();
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        // Prevent memory leaks
+        MusicLibrary.getInstance().removeSortListener(this);
     }
 }

@@ -8,7 +8,8 @@ public class Song {
     private long duration; // in milliseconds
     private String data;   // file path
     private String dateAdded;
-    public Song(long id, String title, String artist, String album, long duration, String data, String dateAdded) {
+    private int trackNumber;
+    public Song(long id, String title, String artist, String album, long duration, String data, String dateAdded, int trackNumber) {
         this.id = id;
         this.title = title;
         this.artist = artist;
@@ -16,6 +17,7 @@ public class Song {
         this.duration = duration;
         this.data = data;
         this.dateAdded = dateAdded;
+        this.trackNumber = trackNumber;
     }
 
     // Getters
@@ -26,4 +28,5 @@ public class Song {
     public long getDuration() { return duration; }
     public String getData() { return data; }
     public String getDate() { return dateAdded; }
+    public int getTrackNumber() { return trackNumber; }
 }
