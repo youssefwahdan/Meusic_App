@@ -104,7 +104,6 @@ public class AllSongsFragment extends Fragment implements MusicLibrary.OnSongsSo
 
         MusicLibrary.getInstance().loadSongs(requireContext(), songsListener);
         MusicLibrary.getInstance().addSortListener(this);
-        PlayerManager.getInstance().setQueue(MusicLibrary.getInstance().getSongs());
 
     }
     private void loadSongs() {

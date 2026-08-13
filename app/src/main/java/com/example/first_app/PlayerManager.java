@@ -112,9 +112,14 @@ public class PlayerManager {
         refreshNotificationUI();
     }
 
+    public void stopPlayback() {
+        releasePlayer();
+        stopService();
+    }
+
     public void next() {
         if (queue == null || currentIndex >= queue.size() - 1) {
-            releasePlayer();
+            stopPlayback(); // Queue ended! NOW we stop the service and notification.
             return;
         }
         currentIndex++;
@@ -192,7 +197,7 @@ public class PlayerManager {
         isPlaying = false;
         abandonAudioFocus();
         releaseWakeLock();
-        stopService();
+//        stopService();
         notifyPlaybackState();
     }
 

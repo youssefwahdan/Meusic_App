@@ -1,79 +1,84 @@
 package com.example.first_app;
 
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-
+import android.widget.Toast;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link AllAlbumsFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class AllAlbumsFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private RecyclerView recyclerView;
+    private AlbumAdapter adapter;
 
     public AllAlbumsFragment() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment AllAlbumsFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static AllAlbumsFragment newInstance(String param1, String param2) {
-        AllAlbumsFragment fragment = new AllAlbumsFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
+        super(R.layout.fragment_all_albums);
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        recyclerView = view.findViewById(R.id.albums_recycler_view);
+
+        // 1. Setup 3-column Grid
+        recyclerView.setLayoutManager(new GridLayoutManager(requireContext(), 3));
+
+        loadAlbums();
+    }
+
+    private void loadAlbums() {
+        List<Song> songs = MusicLibrary.getInstance().getSongs();
+
+        if (songs == null || songs.isEmpty()) {
+            // Trigger load if empty
+            MusicLibrary.getInstance().loadSongs(requireContext(), new MusicLibrary.OnSongsLoadedListener() {
+                @Override public void onSongsLoaded(List<Song> loadedSongs) { setupGrid(loadedSongs); }
+                @Override public void onPermissionRequired(String permission) {}
+                @Override public void onError(String message) {
+                    Toast.makeText(requireContext(), "Error: " + message, Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            setupGrid(songs);
         }
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_all_albums, container, false);
-    }
-    public static LinkedHashMap<String, List<Song>> groupSongsByAlbum(List<Song> songs) {
-        LinkedHashMap<String, List<Song>> grouped = new LinkedHashMap<>();
+    private void setupGrid(List<Song> songs) {
+        // 2. Group songs by Album using LinkedHashMap to preserve order
+        LinkedHashMap<String, List<Song>> groupedByAlbum = new LinkedHashMap<>();
+
         for (Song song : songs) {
-            String album = song.getAlbum() != null ? song.getAlbum() : "Unknown Album";
-            if (!grouped.containsKey(album)) {
-                grouped.put(album, new ArrayList<>());
+            String albumName = song.getAlbum() != null ? song.getAlbum() : "Unknown Album";
+            if (!groupedByAlbum.containsKey(albumName)) {
+                groupedByAlbum.put(albumName, new ArrayList<>());
             }
-            grouped.get(album).add(song);
+            groupedByAlbum.get(albumName).add(song);
         }
-        return grouped;
+
+        // 3. Convert Map to List of Album objects
+        List<Album> albumList = new ArrayList<>();
+        for (Map.Entry<String, List<Song>> entry : groupedByAlbum.entrySet()) {
+            String albumName = entry.getKey();
+            List<Song> albumSongs = entry.getValue();
+            String artistName = albumSongs.get(0).getArtist(); // Get artist from first song
+
+            albumList.add(new Album(albumName, artistName, albumSongs));
+        }
+
+        // 4. Set Adapter
+        adapter = new AlbumAdapter(albumList, album -> {
+            // When an album is clicked, play all its songs
+            PlayerManager.getInstance().playSong(album.getSongs().get(0), album.getSongs());
+        });
+
+        recyclerView.setAdapter(adapter);
     }
 }
