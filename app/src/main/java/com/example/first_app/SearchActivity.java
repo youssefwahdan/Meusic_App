@@ -1,6 +1,7 @@
 package com.example.first_app;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.text.Editable;
@@ -31,7 +32,6 @@ public class SearchActivity extends AppCompatActivity {
 
     private EditText searchEditText;
     private RecyclerView recyclerView;
-    private SearchSongAdapter adapter;
     private MotionLayout motionLayout;
     private PlayerComponent playerComponent;
     private ImageView backBtn;
@@ -96,16 +96,10 @@ public class SearchActivity extends AppCompatActivity {
 
         MusicLibrary.getInstance().loadSongs(this, songsListener);
 
-        // Initialize adapter with an empty list
-        adapter = new SearchSongAdapter(new ArrayList<>(), song -> {
-            // Handle click: e.g., play the song or open player
-            List<Song> ss = List.of(song);
-            PlayerManager.getInstance().playSong(song, ss);
-//            Toast.makeText(this, "reached here", Toast.LENGTH_SHORT).show();
-        });
+        // Initialize adapter with an empty lis
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(adapter);
+//        recyclerView.setAdapter(adapter);
 
         // Listen to text changes
         searchEditText.addTextChangedListener(new TextWatcher() {
@@ -117,15 +111,46 @@ public class SearchActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                // 1. Ask MusicLibrary to search
-                List<Song> results = MusicLibrary.getInstance().searchSongs(s.toString());
-
-                // 2. Update the adapter with the new results
-                adapter.updateList(results);
+                performSearch(s.toString());
             }
         });
 
     }
+
+    private void performSearch(String query) {
+        // 1. Get results directly from MusicLibrary
+        List<SearchItem> results = MusicLibrary.getInstance().search(query);
+
+        // 2. Setup Adapter with Click Listener
+        SearchAdapter searchAdapter = new SearchAdapter(results, item -> {
+
+            if (item.type == SearchItem.TYPE_SONG) {
+                // Play the song
+                Song song = (Song) item.data;
+                PlayerManager.getInstance().playSong(song, MusicLibrary.getInstance().getSongs());
+
+            } else if (item.type == SearchItem.TYPE_ARTIST) {
+                // Open Artist Details Activity
+                String artistName = (String) item.data;
+                Intent intent = new Intent(SearchActivity.this, DetailSongsActivity.class);
+                intent.putExtra(DetailSongsActivity.EXTRA_TYPE, "ARTIST");
+                intent.putExtra(DetailSongsActivity.EXTRA_NAME, artistName);
+                startActivity(intent);
+
+            } else if (item.type == SearchItem.TYPE_ALBUM) {
+                // Open Album Details Activity
+                String albumName = (String) item.data;
+                Intent intent = new Intent(SearchActivity.this, DetailSongsActivity.class);
+                intent.putExtra(DetailSongsActivity.EXTRA_TYPE, "ALBUM");
+                intent.putExtra(DetailSongsActivity.EXTRA_NAME, albumName);
+                startActivity(intent);
+            }
+        });
+
+        // 3. Update RecyclerView
+        recyclerView.setAdapter(searchAdapter);
+    }
+
     @Override
     public void onBackPressed() {
         if (motionLayout.getProgress() > 0.0) {

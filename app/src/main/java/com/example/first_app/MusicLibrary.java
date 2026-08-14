@@ -16,7 +16,9 @@ import androidx.core.content.ContextCompat;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * MusicLibrary
@@ -219,13 +221,60 @@ public class MusicLibrary {
 
         for (Song song : songs) {
             // Search across Title, Artist, and Album
-            if (song.getTitle().toLowerCase().contains(lowerCaseQuery) ||
-                    song.getArtist().toLowerCase().contains(lowerCaseQuery) ||
-                    song.getAlbum().toLowerCase().contains(lowerCaseQuery)) {
+            if (song.getTitle().toLowerCase().contains(lowerCaseQuery)) {
                 filteredList.add(song);
             }
         }
         return filteredList;
+    }
+
+
+    // Add this method inside your MusicLibrary class
+    public List<SearchItem> search(String query) {
+        List<SearchItem> results = new ArrayList<>();
+        if (songs == null || query == null || query.trim().isEmpty()) {
+            return results;
+        }
+
+        String lowerQuery = query.toLowerCase().trim();
+        Set<String> addedArtists = new HashSet<>();
+        Set<String> addedAlbums = new HashSet<>();
+
+        // 1. Find Matching Songs
+        for (Song song : songs) {
+            if (song.getTitle() != null && song.getTitle().toLowerCase().contains(lowerQuery)) {
+                results.add(new SearchItem(SearchItem.TYPE_SONG, song.getTitle(), song.getArtist(), song, new ArrayList<>()));
+            }
+        }
+
+        // 2. Find Matching Artists (Unique)
+        for (Song song : songs) {
+            String artist = song.getArtist();
+            if (artist != null && artist.toLowerCase().contains(lowerQuery) && !addedArtists.contains(artist)) {
+                long count = songs.stream().filter(s -> s.getArtist() != null && s.getArtist().equals(artist)).count();
+                results.add(new SearchItem(SearchItem.TYPE_ARTIST, artist, count + " Songs", artist, new ArrayList<>()));
+                addedArtists.add(artist);
+            }
+        }
+
+        // 3. Find Matching Albums (Unique)
+        for (Song song : songs) {
+            String album = song.getAlbum();
+            if (album != null && album.toLowerCase().contains(lowerQuery) && !addedAlbums.contains(album)) {
+                ArrayList<Song> albumSongs = new ArrayList<>();
+
+                for (Song s : songs) {
+                    if (s.getAlbum() != null && s.getAlbum().equals(album)) {
+                        albumSongs.add(s);
+                    }
+                }
+                String artist = song.getArtist();
+                results.add(new SearchItem(SearchItem.TYPE_ALBUM, album, artist != null ? artist : "Unknown Artist", album, albumSongs));
+                addedAlbums.add(album);
+            }
+        }
+
+        return results;
     }
 
     public void sortSongs(int option) {
