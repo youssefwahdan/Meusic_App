@@ -5,66 +5,29 @@ import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.constraintlayout.motion.widget.MotionLayout;
-
+import androidx.core.view.GestureDetectorCompat;
 
 import jp.wasabeef.blurry.Blurry;
-/**
- * PlayerComponent
- *
- * UI binder that connects a MotionLayout player view to PlayerManager.
- * - Updates title, artist, album art, play/pause icon, seekbar and time labels.
- * - Handles user actions: play/pause, next, prev, seek, expand/collapse.
- * - Loads embedded album art on a background thread and applies a blurred background.
- *
- * Public / lifecycle methods (what each does)
- * - PlayerComponent(MotionLayout motionLayout, PlayerManager playerManager)
- *     Constructor: finds views inside the MotionLayout, wires UI listeners,
- *     registers as a PlayerStateListener, and initializes UI from current player state.
- *
- * - detach()
- *     Unregister this component from PlayerManager to avoid memory leaks (call in onDestroy).
- *
- * PlayerStateListener implementations (called by PlayerManager)
- * - onSongChanged(Song song)
- *     Update title and artist text, reset placeholder art, and start loading album art.
- *
- * - onPlaybackStateChanged(boolean isPlaying)
- *     Update the play/pause button icon to reflect current playback state.
- *
- * - onProgressChanged(int currentMs, int totalMs)
- *     Update seekBar max/progress and the current/total time labels.
- *
- * UI wiring and helpers
- * - initViews()
- *     Cache references to required views (title, artist, art, buttons, seekbar, times).
- *
- * - setupListeners()
- *     Attach click handlers for play/prev/next/down and a SeekBar listener that
- *     updates the displayed time while dragging and calls playerManager.seekTo() on release.
- *
- * - loadAlbumArt(Song song)
- *     Background thread: use MediaMetadataRetriever with a MediaStore Uri to extract
- *     embedded artwork; post bitmap updates to the main thread and blur the background.
- *
- * Notes
- * - Call detach() when the host Activity/Fragment is destroyed.
- * - Ensure required permissions are granted before metadata retrieval on older Android versions.
- */
-
 
 public class PlayerComponent implements PlayerManager.PlayerStateListener {
     private MotionLayout motionLayout;
     private PlayerManager playerManager;
 
+    private View mainContainer;
     private TextView titleText, artistText, currentTime, totalTime;
     private ImageView artView, bgArtView, playBtn, prevBtn, nextBtn, downBtn;
     private SeekBar seekBar;
+    private float startProgress = 0f;
 
     public PlayerComponent(MotionLayout motionLayout, PlayerManager playerManager) {
         this.motionLayout = motionLayout;
@@ -72,15 +35,14 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener {
 
         initViews();
         setupListeners();
-        // Start listening to global player state
         this.playerManager.addListener(this);
 
-        // Initialize UI with current state (in case a song is already playing)
         onSongChanged(this.playerManager.getCurrentSong());
         onPlaybackStateChanged(this.playerManager.isPlaying());
     }
 
     private void initViews() {
+        mainContainer = motionLayout.findViewById(R.id.main_container);
         titleText = motionLayout.findViewById(R.id.song_title);
         artistText = motionLayout.findViewById(R.id.song_artist);
         artView = motionLayout.findViewById(R.id.album_art);
@@ -103,16 +65,102 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener {
             downBtn.setOnClickListener(v -> motionLayout.transitionToStart());
         }
 
-        // Allow clicking the main container to expand the player if it's collapsed
-        View mainContainer = motionLayout.findViewById(R.id.main_container);
         if (mainContainer != null) {
-            mainContainer.setOnClickListener(v -> {
-                if (motionLayout.getProgress() == 0f) {
-                    motionLayout.transitionToEnd();
+            final float screenHeight = motionLayout.getResources().getDisplayMetrics().heightPixels;
+            final float touchSlop = ViewConfiguration.get(motionLayout.getContext()).getScaledTouchSlop();
+
+            mainContainer.setOnTouchListener(new View.OnTouchListener() {
+                private float startY;
+                private float startProgress;
+                private boolean isDragging = false;
+                private VelocityTracker velocityTracker;
+
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    switch (event.getActionMasked()) {
+                        case MotionEvent.ACTION_DOWN:
+                            startY = event.getRawY();
+                            startProgress = motionLayout.getProgress();
+                            isDragging = false;
+
+                            if (velocityTracker == null) {
+                                velocityTracker = VelocityTracker.obtain();
+                            } else {
+                                velocityTracker.clear();
+                            }
+                            velocityTracker.addMovement(event);
+
+                            return true; // Consume event to receive MOVE and UP
+
+                        case MotionEvent.ACTION_MOVE:
+                            if (velocityTracker != null) velocityTracker.addMovement(event);
+
+                            float dy = event.getRawY() - startY;
+
+                            // Only start dragging if the finger moved enough to not be considered a tap
+                            if (!isDragging && Math.abs(dy) > touchSlop) {
+                                isDragging = true;
+                            }
+
+                            if (isDragging) {
+                                float newProgress = startProgress - (dy / screenHeight);
+                                motionLayout.setProgress(clamp(newProgress, 0f, 1f));
+                            }
+                            return true;
+
+                        case MotionEvent.ACTION_UP:
+                        case MotionEvent.ACTION_CANCEL:
+                            if (velocityTracker != null) {
+                                velocityTracker.addMovement(event);
+                                velocityTracker.computeCurrentVelocity(1000); // pixels per second
+                                float yVelocity = velocityTracker.getYVelocity();
+                                velocityTracker.recycle();
+                                velocityTracker = null;
+
+                                if (isDragging) {
+                                    // ==========================================
+                                    // 1. VELOCITY / FLING LOGIC
+                                    // ==========================================
+                                    float flingThreshold = 1000f; // Adjust sensitivity here
+
+                                    if (yVelocity > flingThreshold) {
+                                        motionLayout.transitionToStart(); // Fast swipe DOWN
+                                    } else if (yVelocity < -flingThreshold) {
+                                        motionLayout.transitionToEnd();   // Fast swipe UP
+                                    } else {
+                                        // ==========================================
+                                        // 2. SLOW RELEASE: 50% THRESHOLD LOGIC
+                                        // ==========================================
+                                        if (motionLayout.getProgress() >= 0.5f) {
+                                            motionLayout.transitionToEnd();
+                                        } else {
+                                            motionLayout.transitionToStart();
+                                        }
+                                    }
+                                } else {
+                                    // ==========================================
+                                    // 3. SINGLE TAP LOGIC
+                                    // ==========================================
+                                    // This triggers if the user tapped without dragging
+
+                                    // Example: Tap to expand if currently collapsed
+                                    if (motionLayout.getProgress() < 0.5f) {
+                                        motionLayout.transitionToEnd();
+                                    }
+
+                                    // Optional: Tap to collapse if currently expanded
+                                    // else {
+                                    //     motionLayout.transitionToStart();
+                                    // }
+                                }
+                                return true;
+                            }
+                            return false;
+                    }
+                    return false;
                 }
             });
         }
-
         if (seekBar != null) {
             seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -132,10 +180,7 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener {
         if (song == null) return;
         if (titleText != null) titleText.setText(song.getTitle());
         if (artistText != null) artistText.setText(song.getArtist());
-        if (artView != null) artView.setImageResource(R.drawable.ic_music); // Reset before loading
-
-        // Automatically expand the player when a new song is played
-//        motionLayout.transitionToEnd();
+        if (artView != null) artView.setImageResource(R.drawable.ic_music);
 
         loadAlbumArt(song);
     }
@@ -193,8 +238,9 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener {
             }
         }).start();
     }
-
-    // Call this in the Activity's onDestroy to prevent memory leaks
+    private float clamp(float value, float min, float max) {
+        return Math.max(min, Math.min(max, value));
+    }
     public void detach() {
         playerManager.removeListener(this);
     }

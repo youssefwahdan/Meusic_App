@@ -3,7 +3,7 @@
     xmlns:motion="http://schemas.android.com/apk/res-auto">
     <Transition
         android:id="@+id/open_btn"
-        motion:constraintSetEnd="@+id/end"
+        motion:constraintSetEnd="@id/end"
         motion:constraintSetStart="@id/start"
         motion:duration="400"
         motion:layoutDuringTransition="honorRequest"
@@ -11,24 +11,7 @@
         <KeyFrameSet>
 
         </KeyFrameSet>
-        <OnClick motion:targetId="@id/main_container" motion:clickAction="transitionToEnd"/>
-<!--        <OnSwipe motion:touchRegionId="@id/swipe_container" motion:dragDirection="dragUp"  motion:touchAnchorSide="top"/>-->
-
-<!--        <OnSwipe motion:touchRegionId="@id/main_container" motion:touchAnchorId="@id/main_container" motion:moveWhenScrollAtTop="true" motion:onTouchUp="autoComplete" motion:dragDirection="dragUp" motion:touchAnchorSide="middle" />-->
-<!--    <OnSwipe motion:touchRegionId="@id/main_container" motion:dragDirection="dragUp" motion:onTouchUp="autoComplete" motion:touchAnchorId="@id/main_container" motion:touchAnchorSide="top" />-->
     </Transition>
-    <Transition
-        android:id="@+id/down_btn_close"
-        motion:constraintSetEnd="@+id/end"
-        motion:constraintSetStart="@id/start"
-        motion:duration="400"
-        motion:layoutDuringTransition="honorRequest"
-        >
-        <OnClick motion:clickAction="transitionToStart" motion:targetId="@id/down_btn" />
-    </Transition>
-
-
-
     <ConstraintSet android:id="@+id/end">
 
         <Constraint
@@ -64,11 +47,6 @@
                 motion:attributeName="backgroundColor"
                 motion:customColorValue="@color/secondaryBackground"
                 />
-        </Constraint>
-        <Constraint
-            android:id="@id/transparent_layer_container"
-            >
-            <CustomAttribute motion:attributeName="radius" motion:customDimension="16dp" />
         </Constraint>
         <Constraint
             android:id="@id/background_album_art_container">
