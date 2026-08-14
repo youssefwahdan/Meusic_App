@@ -5,7 +5,6 @@ import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -15,8 +14,6 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.constraintlayout.motion.widget.MotionLayout;
-import androidx.core.view.GestureDetectorCompat;
-
 import jp.wasabeef.blurry.Blurry;
 
 public class PlayerComponent implements PlayerManager.PlayerStateListener {
