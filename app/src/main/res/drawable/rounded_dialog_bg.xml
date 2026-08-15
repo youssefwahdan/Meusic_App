@@ -7,4 +7,5 @@
 
     <!-- Set the border radius here (e.g., 24dp) -->
     <corners android:radius="20dp" />
+    <stroke android:color="@color/primary" android:width="1dp" />
 </shape>

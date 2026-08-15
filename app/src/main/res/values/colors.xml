@@ -19,6 +19,7 @@
     <!-- You can also use 8-digit hex codes for transparency (AARRGGBB) -->
     <!-- This is 50% transparent black -->
     <color name="primary">#FF5C5C</color>
+    <color name="primary_transparent_50">#80FF5C5C</color>
     <color name="secondary">#5C5CFF</color>
     <color name="transparentBackground_50">#80FFFFFF</color>
     <color name="primaryBackground">#000000</color>
