@@ -23,8 +23,10 @@
     <color name="transparentBackground_50">#80FFFFFF</color>
     <color name="primaryBackground">#000000</color>
     <color name="secondaryBackground">#1A1A1A</color>
+    <color name="dialogBackground">#121212</color>
     <color name="primaryForeground">#FFFFFF</color>
     <color name="secondaryForeground">#808080</color>
+
     <color name="gray_200">#CFCFCF</color>
 
 

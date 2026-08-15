@@ -98,9 +98,20 @@
         android:textColor="@color/secondaryForeground"
         android:textSize="@dimen/text_size_caption"
         android:text="3:50"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintEnd_toStartOf="@id/two_dots_option"
+        app:layout_constraintTop_toTopOf="@id/two_dots_option"
+        app:layout_constraintBottom_toBottomOf="@id/two_dots_option" />
+
+    <ImageView
+        android:id="@+id/two_dots_option"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:src="@drawable/ic_two_dots_vert"
+        />
 
 
     <!-- Divider -->

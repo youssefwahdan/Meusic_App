@@ -350,7 +350,7 @@ public class MusicLibrary {
         int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
 
         // 2. Calculate the dialog width (e.g., 0.90 = 90% of the screen)
-        int dialogWidth = (int) (screenWidth * 0.80);
+        int dialogWidth = (int) (screenWidth * 0.90);
 
         // 3. Apply the width and set height to wrap content
         dialog.getWindow().setLayout(dialogWidth, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);

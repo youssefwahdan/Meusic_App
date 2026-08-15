@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="20dp"
+    >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Title"
+            android:textStyle="bold"
+            android:textColor="@color/secondaryForeground"
+            android:textSize="12sp" />
+        <TextView
+            android:id="@+id/detail_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:textSize="16sp"
+            android:textColor="@color/primaryForeground" />
+
+        <!-- Artist -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Artist"
+            android:textStyle="bold"
+            android:textColor="@color/secondaryForeground"
+            android:textSize="12sp" />
+        <TextView
+            android:id="@+id/detail_artist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:textSize="16sp"
+            android:textColor="@color/primaryForeground" />
+
+        <!-- Album -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Album"
+            android:textStyle="bold"
+            android:textColor="@color/secondaryForeground"
+            android:textSize="12sp" />
+        <TextView
+            android:id="@+id/detail_album"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:textSize="16sp"
+            android:textColor="@color/primaryForeground" />
+
+        <!-- Duration -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Duration"
+            android:textStyle="bold"
+            android:textColor="@color/secondaryForeground"
+            android:textSize="12sp" />
+        <TextView
+            android:id="@+id/detail_duration"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:textSize="16sp"
+            android:textColor="@color/primaryForeground" />
+
+        <!-- File Path -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="File Path"
+            android:textStyle="bold"
+            android:textColor="@color/secondaryForeground"
+            android:textSize="12sp" />
+        <TextView
+            android:id="@+id/detail_path"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="@color/primaryForeground"
+            android:autoLink="none" />
+
+    </LinearLayout>
+</ScrollView>

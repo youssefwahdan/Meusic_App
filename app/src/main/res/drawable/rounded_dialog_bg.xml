@@ -3,8 +3,8 @@
     android:shape="rectangle">
 
     <!-- Set the background color to match your app's theme -->
-    <solid android:color="@color/secondaryBackground" />
+    <solid android:color="@color/dialogBackground" />
 
     <!-- Set the border radius here (e.g., 24dp) -->
-    <corners android:radius="24dp" />
+    <corners android:radius="20dp" />
 </shape>
