@@ -95,6 +95,15 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
             notifyItemChanged(0); // Refresh only the first item
         }
     }
+
+    public void updateFavouritesCount(int count) {
+        // Assuming "All songs" is the first item (index 0) in your list
+        if (!menuItems.isEmpty()) {
+            menuItems.get(2).setSubtitle(count + " songs");
+            notifyItemChanged(2); // Refresh only the first item
+        }
+    }
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView icon;
         TextView title, subtitle;

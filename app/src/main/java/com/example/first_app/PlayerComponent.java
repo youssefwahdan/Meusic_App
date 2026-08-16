@@ -22,7 +22,7 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener {
 
     private View mainContainer;
     private TextView titleText, artistText, currentTime, totalTime;
-    private ImageView artView, bgArtView, playBtn, prevBtn, nextBtn, downBtn;
+    private ImageView artView, bgArtView, playBtn, prevBtn, nextBtn, downBtn, favBtn;
     private SeekBar seekBar;
     private float startProgress = 0f;
 
@@ -51,6 +51,8 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener {
         seekBar = motionLayout.findViewById(R.id.seek_bar);
         currentTime = motionLayout.findViewById(R.id.current_time);
         totalTime = motionLayout.findViewById(R.id.total_time);
+        favBtn = motionLayout.findViewById(R.id.favourite_icon);
+
     }
 
     private void setupListeners() {
@@ -60,6 +62,15 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener {
 
         if (downBtn != null) {
             downBtn.setOnClickListener(v -> motionLayout.transitionToStart());
+        }
+
+        if (favBtn != null) {
+            favBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                }
+            });
         }
 
         if (mainContainer != null) {

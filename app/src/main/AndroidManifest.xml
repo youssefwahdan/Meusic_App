@@ -45,6 +45,10 @@
         <activity
             android:name=".DetailSongsActivity"
             android:exported="false" />
+        <activity
+            android:name=".FavouriteActivity"
+            android:exported="false"
+            />
     </application>
 
 </manifest>

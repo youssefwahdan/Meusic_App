@@ -6,6 +6,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.motion.widget.MotionLayout;
+import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -39,6 +40,13 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    private final MusicLibrary.OnFavouritesLoadedListener favouritesListener = new MusicLibrary.OnFavouritesLoadedListener() {
+        @Override
+        public void onFavouritesCountLoaded(int count) {
+            adapter.updateFavouritesCount(count);
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,8 +61,8 @@ public class MainActivity extends AppCompatActivity {
         // Initialize with a temporary count (e.g., "0 songs")
         menuList.add(new MenuItem(R.drawable.ic_music, "All songs", "0 songs"));
         menuList.add(new MenuItem(R.drawable.ic_playlist, "Playlists", "1"));
-        menuList.add(new MenuItem(R.drawable.ic_favorite, "Favourite", "25 songs"));
-        menuList.add(new MenuItem(R.drawable.ic_recent, "Recently played", "644 songs"));
+        menuList.add(new MenuItem(R.drawable.ic_favorite, "Favourite", "0 songs"));
+//        menuList.add(new MenuItem(R.drawable.ic_recent, "Recently played", "644 songs"));
         menuList.add(new MenuItem(R.drawable.ic_settings, "Settings", ""));
         adapter = new MenuAdapter(menuList, new MenuAdapter.OnItemClickListener() {
             @Override
@@ -73,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Load songs (handles permissions + fetching + caching automatically)
         MusicLibrary.getInstance().loadSongs(this, songsListener);
+        MusicLibrary.getInstance().getFavouritesCount(this, this, favouritesListener);
         PlayerManager.getInstance().setQueue(MusicLibrary.getInstance().getSongs());
     }
 
@@ -83,8 +92,8 @@ public class MainActivity extends AppCompatActivity {
             case 0:
                 // "All songs" clicked
 //                Toast.makeText(this, "Opening All Songs...", Toast.LENGTH_SHORT).show();
-                 Intent intent = new Intent(this, AllSongsActivity.class);
-                 startActivity(intent);
+                 Intent allSongIntent = new Intent(this, AllSongsActivity.class);
+                 startActivity(allSongIntent);
                 break;
 
             case 1:
@@ -94,7 +103,9 @@ public class MainActivity extends AppCompatActivity {
 
             case 2:
                 // "Favourite" clicked
-                Toast.makeText(this, "Opening Favourites...", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(this, "Opening Favourites...", Toast.LENGTH_SHORT).show();
+                Intent favouriteIntent = new Intent(this, FavouriteActivity.class);
+                startActivity(favouriteIntent);
                 break;
 
             case 5:

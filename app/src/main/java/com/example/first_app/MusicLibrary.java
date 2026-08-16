@@ -12,6 +12,8 @@ import android.provider.MediaStore;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.LiveData;
 
 import com.google.android.material.snackbar.Snackbar;
 
@@ -82,6 +84,10 @@ public class MusicLibrary {
     }
     public interface OnSongsSortedListener {
         void onSongsSorted();
+    }
+
+    public interface OnFavouritesLoadedListener {
+        void onFavouritesCountLoaded(int count);
     }
 
     private final List<OnSongsSortedListener> sortListeners = new ArrayList<>();
@@ -355,4 +361,13 @@ public class MusicLibrary {
         // 3. Apply the width and set height to wrap content
         dialog.getWindow().setLayout(dialogWidth, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
     }
+
+    public void getFavouritesCount(LifecycleOwner lifecycleOwner, Context context, OnFavouritesLoadedListener listener) {
+        FavoriteManager.getInstance(context).getFavoritesCount().observe(lifecycleOwner, count -> {
+            if (count != null) {
+                if (listener != null) listener.onFavouritesCountLoaded(count);
+            }
+        });
+    }
+
 }

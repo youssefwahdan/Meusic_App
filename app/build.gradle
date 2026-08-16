@@ -46,4 +46,10 @@ dependencies {
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
     debugImplementation 'androidx.compose.ui:ui-tooling'
     implementation "androidx.media:media:1.7.0"
+    // Room Database
+    implementation "androidx.room:room-runtime:2.6.1"
+    annotationProcessor "androidx.room:room-compiler:2.6.1"
+
+    // LiveData (for observing database changes)
+    implementation "androidx.lifecycle:lifecycle-livedata:2.7.0"
 }

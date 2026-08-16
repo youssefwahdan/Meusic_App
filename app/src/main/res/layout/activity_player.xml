@@ -69,7 +69,7 @@
         android:id="@+id/album_art_container"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:cardCornerRadius="24dp"
+        app:cardCornerRadius="30dp"
         app:cardElevation="0dp"
         app:cardBackgroundColor="@android:color/transparent"
         app:layout_constraintBottom_toBottomOf="@id/art_container"
@@ -94,14 +94,25 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
+        android:layout_marginEnd="16dp"
         android:text="Song Title"
         android:textColor="@color/primaryForeground"
         android:textSize="18sp"
         android:maxLines="1"
         android:ellipsize="end"
         app:layout_constraintStart_toStartOf="@id/art_container"
-        app:layout_constraintEnd_toEndOf="@id/art_container"
+        app:layout_constraintEnd_toStartOf="@id/favourite_icon"
         app:layout_constraintTop_toBottomOf="@id/art_container"
+        />
+    <ImageView
+        android:id="@+id/favourite_icon"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:src="@drawable/ic_favorite_border"
+        app:layout_constraintTop_toTopOf="@id/song_title"
+        app:layout_constraintBottom_toBottomOf="@id/song_title"
+        app:layout_constraintEnd_toEndOf="@id/album_art_container"
+
         />
 
     <!-- 3. Artist Name -->
@@ -113,9 +124,11 @@
         android:text="Artist Name"
         android:textColor="@color/gray_200"
         android:textSize="12sp"
-        app:layout_constraintEnd_toEndOf="@id/song_title"
+        app:layout_constraintEnd_toEndOf="@id/album_art_container"
         app:layout_constraintStart_toStartOf="@id/song_title"
         app:layout_constraintTop_toBottomOf="@id/song_title" />
+
+
 
     <!-- 4. Play/Pause Button -->
     <ImageView
@@ -143,7 +156,6 @@
         android:foregroundTint="@color/primaryBackground"
         android:progressBackgroundTint="@color/primaryForeground"
         android:progressTint="@color/primary"
-        android:progress="30"
         />
 
     <!-- 2. Current Time -->

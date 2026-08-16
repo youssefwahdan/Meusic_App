@@ -63,6 +63,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
                 }
             }
         });
+
         holder.optionsDots.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -85,10 +86,23 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
         View addToFavOption = dialogView.findViewById(R.id.favourite_option);
         View infoOption = dialogView.findViewById(R.id.song_info_option);
 
+        ImageView favouriteImage = dialogView.findViewById(R.id.favourite_icon);
+
+        FavoriteManager.getInstance(context)
+                .getFavoriteStatus(song.getId())
+                .observeForever(isFav -> {
+                    // isFav is 1 if favorite, 0 if not
+                    if (isFav != null && isFav == 1) {
+                        favouriteImage.setImageResource(R.drawable.ic_favorite);
+                    } else {
+                        favouriteImage.setImageResource(R.drawable.ic_favorite_border);
+                    }
+                });
+
         addToFavOption.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(context, "Options coming soon!", Toast.LENGTH_SHORT).show();
+                FavoriteManager.getInstance(v.getContext()).toggleFavorite(song.getId());
             }
         });
 
