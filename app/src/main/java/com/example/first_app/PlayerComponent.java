@@ -25,6 +25,7 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener {
     private ImageView artView, bgArtView, playBtn, prevBtn, nextBtn, downBtn, favBtn;
     private SeekBar seekBar;
     private float startProgress = 0f;
+    private long currentSongId = -1;
 
     public PlayerComponent(MotionLayout motionLayout, PlayerManager playerManager) {
         this.motionLayout = motionLayout;
@@ -65,10 +66,13 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener {
         }
 
         if (favBtn != null) {
-            favBtn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
+            favBtn.setOnClickListener(v -> {
+                if (currentSongId != -1) {
+                    // Toggle the favorite status in the database
+                    FavoriteManager.getInstance(v.getContext()).toggleFavorite(currentSongId);
 
+                    // Update the icon immediately (we'll refresh the actual state from DB below)
+                    updateFavoriteIcon(currentSongId);
                 }
             });
         }
@@ -190,6 +194,7 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener {
         if (artistText != null) artistText.setText(song.getArtist());
         if (artView != null) artView.setImageResource(R.drawable.ic_music);
 
+        updateFavoriteState(song);
         loadAlbumArt(song);
     }
 
@@ -246,6 +251,35 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener {
             }
         }).start();
     }
+
+
+    // 3. Add this method to update the icon based on the current song
+    public void updateFavoriteState(Song song) {
+        if (song != null) {
+            currentSongId = song.getId();
+            updateFavoriteIcon(currentSongId);
+        }
+    }
+
+    // 4. Helper method to check DB and set the correct icon
+    private void updateFavoriteIcon(long songId) {
+        // We use the async method to check the database safely
+        // Note: You might need to add an 'isFavoriteAsync' method to FavoriteManager similar to getFavouritesCountAsync
+        // OR, simpler: use the LiveData observer since motionLayout.getContext() is usually the Activity.
+
+        FavoriteManager.getInstance(motionLayout.getContext())
+                .getFavoriteStatus(songId)
+                .observe((androidx.lifecycle.LifecycleOwner) motionLayout.getContext(), status -> {
+                    if (status != null && status == 1) {
+                        favBtn.setImageResource(R.drawable.ic_favorite); // Filled heart/star
+                        favBtn.setTag("fav");
+                    } else {
+                        favBtn.setImageResource(R.drawable.ic_favorite_border); // Empty heart/star
+                        favBtn.setTag("not_fav");
+                    }
+                });
+    }
+
     private float clamp(float value, float min, float max) {
         return Math.max(min, Math.min(max, value));
     }
