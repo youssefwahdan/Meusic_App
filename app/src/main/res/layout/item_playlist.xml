@@ -4,20 +4,31 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
-    android:padding="16dp">
+    android:paddingHorizontal="16dp"
+    android:paddingTop="8dp"
+    >
 
     <!-- Playlist Icon -->
-    <ImageView
-        android:id="@+id/playlist_icon"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:src="@android:drawable/ic_menu_agenda"
-        android:padding="8dp"
+    <androidx.cardview.widget.CardView
+        android:id="@+id/playlist_icon_container"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:tint="@color/primaryForeground" />
+        app:cardBackgroundColor="@color/full_transparent"
+        app:cardCornerRadius="10dp"
+        >
+        <ImageView
+            android:id="@+id/playlist_icon"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_menu"
+            android:scaleType="centerCrop"
+            />
+    </androidx.cardview.widget.CardView>
+
 
     <!-- Playlist Name -->
     <TextView
@@ -34,7 +45,7 @@
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/delete_btn"
-        app:layout_constraintStart_toEndOf="@id/playlist_icon"
+        app:layout_constraintStart_toEndOf="@id/playlist_icon_container"
         app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Delete Button -->
@@ -49,4 +60,14 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:tint="@color/secondaryForeground" />
 
+    <com.google.android.material.divider.MaterialDivider
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="@color/secondaryBackground"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/playlist_icon_container"
+        android:layout_marginTop="6dp"
+        />
 </androidx.constraintlayout.widget.ConstraintLayout>

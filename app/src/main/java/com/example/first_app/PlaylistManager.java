@@ -92,7 +92,7 @@ public class PlaylistManager {
     public LiveData<List<Long>> getSongIdsInPlaylist(int playlistId) {
         return playlistSongDao.getSongIdsInPlaylist(playlistId);
     }
-    public LiveData<Long> getFirstSongIdOnPlaylist(int playlistId) {
-        return playlistSongDao.getFirstSongOnPlaylist(playlistId);
+    public Long getFirstSongIdInPlaylist(int playlistId) {
+        return playlistSongDao.getFirstSongInPlaylist(playlistId);
     }
 }

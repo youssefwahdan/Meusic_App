@@ -34,13 +34,11 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.Playli
     private final OnPlaylistClickListener listener;
 
     private Context appContext;
-    private LifecycleOwner appLifecycle;
 
-    public PlaylistAdapter(List<PlaylistEntity> playlists, OnPlaylistClickListener listener, Context context, LifecycleOwner lifecycle) {
+    public PlaylistAdapter(List<PlaylistEntity> playlists, OnPlaylistClickListener listener, Context context) {
         this.playlists = playlists;
         this.listener = listener;
         this.appContext = context;
-        this.appLifecycle = lifecycle;
     }
 
     @NonNull
@@ -63,15 +61,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.Playli
         });
 
 
-//            PlaylistManager.getInstance(appContext).getFirstSongIdOnPlaylist(playlist.playlistId).observe(appLifecycle, new Observer<Long>() {
-//                @Override
-//                public void onChanged(Long aLong) {
-//                    if (aLong != null) {
-//                        loadAlbumArt(holder.playlistCover, aLong);
-//                    }
-//
-//                }
-//            });
+        loadFirstSongAlbumArt(holder.playlistCover, playlist.playlistId);
 
         // Handle Delete Click
         holder.deleteBtn.setOnClickListener(v -> {
@@ -79,20 +69,32 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.Playli
         });
     }
 
-    private void loadAlbumArt(ImageView imageView, long songId) {
-        // Run on a background thread to prevent UI lag in the grid
+    private void loadFirstSongAlbumArt(ImageView imageView, int playlistId) {
+        // Set a default icon first
+        // because of the recycler view behavior
+        imageView.setImageResource(R.drawable.ic_menu);
+
+        // Run on background thread to avoid UI lag
         new Thread(() -> {
             try {
-                Uri trackUri = android.content.ContentUris.withAppendedId(
-                        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId);
-                MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-                retriever.setDataSource(imageView.getContext(), trackUri);
-                byte[] art = retriever.getEmbeddedPicture();
-                if (art != null) {
-                    Bitmap bitmap = BitmapFactory.decodeByteArray(art, 0, art.length);
-                    imageView.post(() -> imageView.setImageBitmap(bitmap));
+                // 1. Get the first song ID from the playlist
+                Long firstSongId = PlaylistManager.getInstance(appContext).getFirstSongIdInPlaylist(playlistId);
+
+                if (firstSongId != null) {
+                        Uri trackUri = android.content.ContentUris.withAppendedId(
+                                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, firstSongId);
+
+                        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+                        retriever.setDataSource(appContext, trackUri);
+                        byte[] art = retriever.getEmbeddedPicture();
+
+                        if (art != null) {
+                            Bitmap bitmap = BitmapFactory.decodeByteArray(art, 0, art.length);
+                            // Post to main thread to update ImageView
+                            imageView.post(() -> imageView.setImageBitmap(bitmap));
+                        }
+                        retriever.release();
                 }
-                retriever.release();
             } catch (Exception e) {
                 e.printStackTrace();
             }

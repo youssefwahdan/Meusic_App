@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -81,7 +82,7 @@ public class PlaylistActivity extends AppCompatActivity {
                         intent.putExtra("PLAYLIST_ID", playlist.playlistId);
                         intent.putExtra("PLAYLIST_NAME", playlist.name);
                         startActivity(intent);
-                    }, this,this);
+                    }, this);
                     recyclerView.setAdapter(adapter);
                 } else {
                     adapter.notifyDataSetChanged();
@@ -128,9 +129,13 @@ public class PlaylistActivity extends AppCompatActivity {
         createBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!playlistName[0].isEmpty()) {
-                    PlaylistManager.getInstance(PlaylistActivity.this).createPlaylist(playlistName[0]);
-                    dialog.dismiss();
+                try {
+                    if (!playlistName[0].isEmpty()) {
+                        PlaylistManager.getInstance(PlaylistActivity.this).createPlaylist(playlistName[0]);
+                        dialog.dismiss();
+                    }
+                } catch (Exception e) {
+                    Toast.makeText(PlaylistActivity.this, "enter valid name", Toast.LENGTH_SHORT).show();
                 }
             }
         });

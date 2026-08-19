@@ -20,6 +20,6 @@ public interface PlaylistSongDao {
     @Query("SELECT EXISTS(SELECT 1 FROM playlist_songs WHERE playlistId = :playlistId AND songId = :songId)")
     int isSongInPlaylistSync(int playlistId, long songId);
 
-    @Query("SELECT songId From (SELECT * FROM playlist_songs ORDER BY orderIndex ASC) WHERE playlistId = :playlistId LIMIT 1")
-    LiveData<Long> getFirstSongOnPlaylist(int playlistId);
+    @Query("SELECT songId FROM playlist_songs WHERE playlistId = :playlistId ORDER BY orderIndex ASC LIMIT 1")
+    Long getFirstSongInPlaylist(int playlistId);
 }

@@ -1,5 +1,6 @@
 package com.example.first_app;
 
+import android.app.AlertDialog;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
@@ -157,7 +158,7 @@ public class AllSongsFragment extends Fragment implements MusicLibrary.OnSongsSo
             }
 
             // 3. Show the dialog
-            new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            AlertDialog.Builder builder = new AlertDialog.Builder(requireContext())
                     .setTitle("Add to Playlist")
                     .setItems(playlistNames, (dialog, which) -> {
                         int selectedPlaylistId = playlistIds[which];
@@ -173,8 +174,20 @@ public class AllSongsFragment extends Fragment implements MusicLibrary.OnSongsSo
                                     }
                                 }
                         );
-                    })
-                    .show();
+                    });
+            AlertDialog dialog = builder.create();
+
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.rounded_dialog_bg);
+
+            int screenWidth = requireContext().getResources().getDisplayMetrics().widthPixels;
+
+            int dialogWidth = (int) (screenWidth * 0.90);
+
+            // 3. Apply the width and set height to wrap content
+            dialog.getWindow().setLayout(dialogWidth, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+
+            dialog.show();
+
         });
     }
     @Override
