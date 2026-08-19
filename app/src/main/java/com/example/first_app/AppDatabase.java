@@ -5,11 +5,13 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-@Database(entities = {FavoriteEntity.class}, version = 1, exportSchema = false)
+@Database(entities = {FavoriteEntity.class, PlaylistEntity.class, PlaylistSongEntity.class}, version = 2, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
     private static volatile AppDatabase INSTANCE;
 
     public abstract FavoriteDao favoriteDao();
+    public abstract PlaylistDao playlistDao();
+    public abstract PlaylistSongDao playlistSongDao();
 
     public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {
@@ -19,7 +21,8 @@ public abstract class AppDatabase extends RoomDatabase {
                             context.getApplicationContext(),
                             AppDatabase.class,
                             "music_database"
-                    ).build();
+                            ).fallbackToDestructiveMigration()
+                            .build();
                 }
             }
         }

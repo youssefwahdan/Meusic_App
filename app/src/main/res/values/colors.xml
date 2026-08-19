@@ -27,7 +27,8 @@
     <color name="dialogBackground">#121212</color>
     <color name="primaryForeground">#FFFFFF</color>
     <color name="secondaryForeground">#808080</color>
-
+    <color name="full_transparent">#00000000</color>
+    <color name="danger">#FF3C3C</color>
     <color name="gray_200">#CFCFCF</color>
 
 

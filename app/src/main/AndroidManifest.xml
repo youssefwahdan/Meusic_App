@@ -49,6 +49,11 @@
             android:name=".FavouriteActivity"
             android:exported="false"
             />
+        <activity android:name=".PlaylistActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustPan"/>
+        <activity android:name=".PlaylistDetailActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

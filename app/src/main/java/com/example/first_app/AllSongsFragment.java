@@ -6,6 +6,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -15,6 +16,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -128,9 +130,53 @@ public class AllSongsFragment extends Fragment implements MusicLibrary.OnSongsSo
             // Tell the global PlayerManager to play the song
             PlayerManager.getInstance().playSong(song, songs);
         });
+        adapter.setOnItemLongClickListener((song, position) -> {
+            showAddToPlaylistDialog(song);
+            return true; // Return true to indicate the long press was consumed
+        });
+
         recyclerView.setAdapter(adapter);
     }
+    private void showAddToPlaylistDialog(Song song) {
+        // 1. Fetch all playlists from the database
+        LiveData<List<PlaylistEntity>> playlistsLiveData = PlaylistManager.getInstance(requireContext()).getAllPlaylists();
 
+        // We use observeForever here just to get the data once for the dialog
+        playlistsLiveData.observeForever(playlists -> {
+            if (playlists == null || playlists.isEmpty()) {
+                Toast.makeText(requireContext(), "No playlists found. Create one first!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // 2. Extract just the names for the dialog
+            String[] playlistNames = new String[playlists.size()];
+            int[] playlistIds = new int[playlists.size()];
+            for (int i = 0; i < playlists.size(); i++) {
+                playlistNames[i] = playlists.get(i).name;
+                playlistIds[i] = playlists.get(i).playlistId;
+            }
+
+            // 3. Show the dialog
+            new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                    .setTitle("Add to Playlist")
+                    .setItems(playlistNames, (dialog, which) -> {
+                        int selectedPlaylistId = playlistIds[which];
+
+                        // Use the new safe method
+                        PlaylistManager.getInstance(requireContext()).addSongToPlaylistSafe(
+                                selectedPlaylistId,
+                                song.getId(),
+                                new PlaylistManager.AddSongCallback() {
+                                    @Override
+                                    public void onResult(boolean success, String message) {
+                                        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                        );
+                    })
+                    .show();
+        });
+    }
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);

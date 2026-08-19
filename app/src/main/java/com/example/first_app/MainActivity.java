@@ -98,7 +98,9 @@ public class MainActivity extends AppCompatActivity {
 
             case 1:
                 // "Playlists" clicked
-                Toast.makeText(this, "Opening Playlists...", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(this, "Opening Playlists...", Toast.LENGTH_SHORT).show();
+                Intent playlistIntent = new Intent(this, PlaylistActivity.class);
+                startActivity(playlistIntent);
                 break;
 
             case 2:

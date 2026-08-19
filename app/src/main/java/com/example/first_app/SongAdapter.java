@@ -26,6 +26,12 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
         void onSongClick(Song song, int position);
     }
 
+    public interface OnItemLongClickListener {
+        boolean onItemLongClick(Song song, int position);
+    }
+
+    private OnItemLongClickListener longClickListener;
+
     public SongAdapter(List<Song> songList, OnSongClickListener listener) {
         this.songList = songList;
         this.listener = listener;
@@ -69,6 +75,13 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
             public void onClick(View v) {
                 showOptionsDialog(song, v.getContext());
             }
+        });
+
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longClickListener != null) {
+                return longClickListener.onItemLongClick(song, holder.getAdapterPosition());
+            }
+            return false;
         });
     }
 
@@ -175,6 +188,10 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
 
         // 3. Apply the width and set height to wrap content
         dialog.getWindow().setLayout(dialogWidth, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+    }
+
+    public void setOnItemLongClickListener(OnItemLongClickListener listener) {
+        this.longClickListener = listener;
     }
 
     // 3. Helper to format milliseconds into MM:SS

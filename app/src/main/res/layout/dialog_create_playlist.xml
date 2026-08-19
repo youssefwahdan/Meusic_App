@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="16dp"
+    >
+    <TextView
+        android:id="@+id/create_playlist_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Create New Playlist"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        />
+
+    <EditText
+        android:id="@+id/create_playlist_edit_txt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/create_playlist_header"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"
+        android:hint="playlist name"
+        android:textColorHint="@color/secondaryForeground"
+        />
+    <Button
+        android:id="@+id/create_playlist_create_action"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Create"
+        app:layout_constraintTop_toBottomOf="@id/create_playlist_edit_txt"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"
+        android:textSize="12sp"
+        android:textColor="@color/secondaryForeground"
+        android:background="@color/full_transparent"
+
+        />
+    <Button
+        android:id="@+id/create_playlist_cancel_action"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cancel"
+        app:layout_constraintTop_toTopOf="@id/create_playlist_create_action"
+        app:layout_constraintBottom_toBottomOf="@id/create_playlist_create_action"
+        app:layout_constraintEnd_toStartOf="@id/create_playlist_create_action"
+        android:layout_marginEnd="8dp"
+        android:textSize="12sp"
+        android:textColor="@color/secondaryForeground"
+        android:background="@color/full_transparent"
+        />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
