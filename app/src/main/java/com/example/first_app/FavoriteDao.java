@@ -27,7 +27,7 @@ public interface FavoriteDao {
     @Query("SELECT * FROM favorites ORDER BY dateAdded DESC")
     LiveData<List<FavoriteEntity>> getAllFavorites();
 
-    @Query("SELECT Count(*) FROM favorites")
+    @Query("SELECT COUNT(*) FROM favorites")
     LiveData<Integer> favouritesCount();
     @Query("SELECT EXISTS(SELECT 1 FROM favorites WHERE songId = :songId)")
     int isFavoriteSync(long songId); // Add this line to FavoriteDao

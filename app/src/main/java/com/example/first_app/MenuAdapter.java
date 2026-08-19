@@ -97,10 +97,15 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
     }
 
     public void updateFavouritesCount(int count) {
-        // Assuming "All songs" is the first item (index 0) in your list
         if (!menuItems.isEmpty()) {
             menuItems.get(2).setSubtitle(count + " songs");
             notifyItemChanged(2); // Refresh only the first item
+        }
+    }
+    public void updatePlaylistsCount(int count) {
+        if (!menuItems.isEmpty()) {
+            menuItems.get(1).setSubtitle(count + " playlists");
+            notifyItemChanged(1); // Refresh only the first item
         }
     }
 

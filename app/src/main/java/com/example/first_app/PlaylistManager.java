@@ -95,4 +95,8 @@ public class PlaylistManager {
     public Long getFirstSongIdInPlaylist(int playlistId) {
         return playlistSongDao.getFirstSongInPlaylist(playlistId);
     }
+
+    public LiveData<Integer> getPlaylistsCount() {
+        return playlistDao.playlistsCount();
+    }
 }

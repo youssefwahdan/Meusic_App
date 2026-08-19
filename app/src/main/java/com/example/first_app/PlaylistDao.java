@@ -17,4 +17,7 @@ public interface PlaylistDao {
     // Get all playlists, sorted by creation date (newest first)
     @Query("SELECT * FROM playlists ORDER BY dateCreated DESC")
     LiveData<List<PlaylistEntity>> getAllPlaylists();
+
+    @Query("SELECT COUNT(*) FROM playlists")
+    LiveData<Integer> playlistsCount();
 }

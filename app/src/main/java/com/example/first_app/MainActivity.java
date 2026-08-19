@@ -1,8 +1,11 @@
 package com.example.first_app;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.motion.widget.MotionLayout;
@@ -47,6 +50,13 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    private final MusicLibrary.OnPlaylistsLoadedListener playlistslistener = new MusicLibrary.OnPlaylistsLoadedListener() {
+        @Override
+        public void onPlaylistsCountLoaded(int count) {
+            adapter.updatePlaylistsCount(count);
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +74,18 @@ public class MainActivity extends AppCompatActivity {
         menuList.add(new MenuItem(R.drawable.ic_favorite, "Favourite", "0 songs"));
 //        menuList.add(new MenuItem(R.drawable.ic_recent, "Recently played", "644 songs"));
         menuList.add(new MenuItem(R.drawable.ic_settings, "Settings", ""));
+
+
+        // Initialize PlayerManager and PlayerComponent
+        PlayerManager.getInstance().init(this);
+        motionLayout = findViewById(R.id.music_player_motionLayout);
+        playerComponent = new PlayerComponent(motionLayout, PlayerManager.getInstance());
+
+        // Load songs (handles permissions + fetching + caching automatically)
+        MusicLibrary.getInstance().loadSongs(this, songsListener);
+        PlayerManager.getInstance().setQueue(MusicLibrary.getInstance().getSongs());
+        MusicLibrary.getInstance().getFavouritesCount(this, this, favouritesListener);
+        MusicLibrary.getInstance().getPlaylistsCount(this, this, playlistslistener);
         adapter = new MenuAdapter(menuList, new MenuAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(MenuItem item, int position) {
@@ -73,16 +95,6 @@ public class MainActivity extends AppCompatActivity {
         });
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
-
-        // Initialize PlayerManager and PlayerComponent
-        PlayerManager.getInstance().init(this);
-        motionLayout = findViewById(R.id.music_player_motionLayout);
-        playerComponent = new PlayerComponent(motionLayout, PlayerManager.getInstance());
-
-        // Load songs (handles permissions + fetching + caching automatically)
-        MusicLibrary.getInstance().loadSongs(this, songsListener);
-        MusicLibrary.getInstance().getFavouritesCount(this, this, favouritesListener);
-        PlayerManager.getInstance().setQueue(MusicLibrary.getInstance().getSongs());
     }
 
     private void handleMenuClick(MenuItem item, int position) {
@@ -132,6 +144,18 @@ public class MainActivity extends AppCompatActivity {
             if (getSupportActionBar() != null) {
                 getSupportActionBar().setDisplayShowHomeEnabled(true);
                 getSupportActionBar().setTitle("Library");
+            }
+        }
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == AUDIO_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, tell MusicLibrary to scan again
+                MusicLibrary.getInstance().loadSongs(this, songsListener);
+            } else {
+                Toast.makeText(this, "Permission needed to load songs", Toast.LENGTH_SHORT).show();
             }
         }
     }

@@ -90,6 +90,10 @@ public class MusicLibrary {
         void onFavouritesCountLoaded(int count);
     }
 
+    public interface OnPlaylistsLoadedListener {
+        void onPlaylistsCountLoaded(int count);
+    }
+
     private final List<OnSongsSortedListener> sortListeners = new ArrayList<>();
 
     public void addSortListener(OnSongsSortedListener listener) {
@@ -134,6 +138,7 @@ public class MusicLibrary {
 
         if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
             if (listener != null) listener.onPermissionRequired(permission);
+
             return;
         }
 
@@ -366,6 +371,14 @@ public class MusicLibrary {
         FavoriteManager.getInstance(context).getFavoritesCount().observe(lifecycleOwner, count -> {
             if (count != null) {
                 if (listener != null) listener.onFavouritesCountLoaded(count);
+            }
+        });
+    }
+
+    public void getPlaylistsCount(LifecycleOwner lifecycleOwner, Context context, OnPlaylistsLoadedListener listener) {
+        PlaylistManager.getInstance(context).getPlaylistsCount().observe(lifecycleOwner, count -> {
+            if (count != null) {
+                if (listener != null) listener.onPlaylistsCountLoaded(count);
             }
         });
     }
