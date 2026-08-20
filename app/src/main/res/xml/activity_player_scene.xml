@@ -5,7 +5,7 @@
         android:id="@+id/open_btn"
         motion:constraintSetEnd="@id/end"
         motion:constraintSetStart="@id/start"
-        motion:duration="400"
+        motion:duration="250"
         motion:layoutDuringTransition="honorRequest"
         >
         <KeyFrameSet>
@@ -175,6 +175,16 @@
             android:visibility="gone"
             motion:layout_constraintBottom_toBottomOf="@id/main_container"
             motion:layout_constraintEnd_toStartOf="@id/play_btn" />
+        <Constraint
+            android:id="@id/playback_mode_btn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:visibility="gone"
+            motion:layout_constraintStart_toEndOf="@id/next_btn"
+            motion:layout_constraintTop_toTopOf="@id/next_btn"
+            motion:layout_constraintBottom_toBottomOf="@id/next_btn"
+            />
+
         <Constraint
             android:id="@id/next_btn"
             android:layout_width="25dp"

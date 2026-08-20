@@ -43,6 +43,21 @@ public class PlayerManager {
     // Cache the current album art for the notification
     private Bitmap currentAlbumArt;
 
+    public enum PlaybackMode {
+        SHUFFLE,          // Shuffle
+        REPEAT_NONE,      // Straight and stop
+        REPEAT_ALL,       // Straight and loop
+        REPEAT_ONE        // Loop on current song
+    }
+
+    private PlaybackMode playbackMode = PlaybackMode.REPEAT_ALL; // Default to straight and loop
+
+    // Listeners to notify the UI when the mode changes
+    public interface OnPlaybackModeChangedListener {
+        void onPlaybackModeChanged(PlaybackMode mode);
+    }
+    private final List<OnPlaybackModeChangedListener> modeListeners = new ArrayList<>();
+
     private final List<PlayerStateListener> listeners = new ArrayList<>();
 
     public interface PlayerStateListener {
@@ -118,22 +133,85 @@ public class PlayerManager {
     }
 
     public void next() {
-        if (queue == null || currentIndex >= queue.size() - 1) {
+        if (queue == null || queue.isEmpty()) {
             stopPlayback(); // Queue ended! NOW we stop the service and notification.
             return;
         }
-        currentIndex++;
+        if (playbackMode == PlaybackMode.REPEAT_ONE) {
+            // Loop current song: just seek to 0 and play
+            if (mediaPlayer != null) {
+                mediaPlayer.seekTo(0);
+                mediaPlayer.start();
+                isPlaying = true;
+                notifyPlaybackState();
+            }
+            return;
+        }
+
+        if (playbackMode == PlaybackMode.SHUFFLE) {
+            // Pick a random song that isn't the current one
+            if (queue.size() > 1) {
+                int nextIndex;
+                do {
+                    nextIndex = new java.util.Random().nextInt(queue.size());
+                } while (nextIndex == currentIndex);
+                currentIndex = nextIndex;
+            }
+        } else {
+            // REPEAT_ALL or REPEAT_NONE (Straight)
+            if (currentIndex >= queue.size() - 1) {
+                if (playbackMode == PlaybackMode.REPEAT_NONE) {
+                    stopPlayback(); // Straight and stop
+                    return;
+                } else {
+                    currentIndex = 0; // Straight and loop back to start
+                }
+            } else {
+                currentIndex++; // Normal next
+            }
+        }
         prepareAndPlay(queue.get(currentIndex));
     }
 
     public void prev() {
-        if (queue == null) return;
-        if (currentIndex > 0) {
-            currentIndex--;
-            prepareAndPlay(queue.get(currentIndex));
-        } else {
-            seekTo(0);
+        if (queue == null || queue.isEmpty()){
+            stopPlayback();
+            return;
         }
+            if (playbackMode == PlaybackMode.REPEAT_ONE) {
+                // Loop current song: just seek to 0 and play
+                if (mediaPlayer != null) {
+                    mediaPlayer.seekTo(0);
+                    mediaPlayer.start();
+                    isPlaying = true;
+                    notifyPlaybackState();
+                }
+                return;
+            }
+
+            if (playbackMode == PlaybackMode.SHUFFLE) {
+                // Pick a random song that isn't the current one
+                if (queue.size() > 1) {
+                    int prevIndex;
+                    do {
+                        prevIndex = new java.util.Random().nextInt(queue.size());
+                    } while (prevIndex == currentIndex);
+                    currentIndex = prevIndex;
+                }
+            } else {
+                // REPEAT_ALL or REPEAT_NONE (Straight)
+                if (currentIndex <= 0) {
+                    if (playbackMode == PlaybackMode.REPEAT_NONE) {
+                        stopPlayback(); // Straight and stop
+                        return;
+                    } else {
+                        currentIndex = queue.size() - 1; // Straight and loop to end
+                    }
+                } else {
+                    currentIndex--; // Normal prev
+                }
+            }
+            prepareAndPlay(queue.get(currentIndex));
     }
 
     public void seekTo(int positionMs) {
@@ -375,5 +453,66 @@ public class PlayerManager {
             int total = mediaPlayer.getDuration();
             for (PlayerStateListener l : listeners) l.onProgressChanged(current, total);
         }
+    }
+
+    public void addModeListener(OnPlaybackModeChangedListener listener) {
+        if (!modeListeners.contains(listener)) modeListeners.add(listener);
+    }
+
+    public void removeModeListener(OnPlaybackModeChangedListener listener) {
+        modeListeners.remove(listener);
+    }
+
+    private void notifyPlaybackModeChanged() {
+        for (OnPlaybackModeChangedListener listener : modeListeners) {
+            listener.onPlaybackModeChanged(playbackMode);
+        }
+    }
+
+    public void cyclePlaybackMode() {
+        switch (playbackMode) {
+            case REPEAT_ALL:
+                playbackMode = PlaybackMode.REPEAT_ONE;
+                break;
+            case REPEAT_ONE:
+                playbackMode = PlaybackMode.SHUFFLE;
+                break;
+            case SHUFFLE:
+                playbackMode = PlaybackMode.REPEAT_NONE;
+                break;
+            case REPEAT_NONE:
+                playbackMode = PlaybackMode.REPEAT_ALL;
+                break;
+        }
+        notifyPlaybackModeChanged();
+    }
+
+    public PlaybackMode getPlaybackMode() {
+        return playbackMode;
+    }
+
+    public void destroyEverything() {
+        // 1. Stop and release the MediaPlayer
+        if (mediaPlayer != null) {
+            if (mediaPlayer.isPlaying()) {
+                mediaPlayer.stop();
+            }
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
+        isPlaying = false;
+
+        // 2. Abandon audio focus
+        abandonAudioFocus();
+
+        // 3. Release wake lock
+        releaseWakeLock();
+
+        // 4. Stop the service (This removes the notification)
+        stopService();
+
+        // 5. Clear the queue and state
+        queue = null;
+        currentIndex = -1;
     }
 }

@@ -39,6 +39,18 @@ public class PlaybackService extends Service {
         return START_STICKY;
     }
 
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        super.onTaskRemoved(rootIntent);
+
+        // 1. Stop the music and release resources
+        PlayerManager.getInstance().releasePlayer();
+
+        // 2. Remove the notification and stop the service
+        stopForeground(true);
+        stopSelf();
+    }
+
     private void handleIntent(Intent intent) {
         String action = intent.getAction();
         PlayerManager player = PlayerManager.getInstance();
@@ -138,4 +150,14 @@ public class PlaybackService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) { return null; }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        // Fallback cleanup just in case
+        PlayerManager.getInstance().destroyEverything();
+        if (PlayerManager.getInstance() != null) {
+            PlayerManager.getInstance().releasePlayer();
+        }
+    }
 }

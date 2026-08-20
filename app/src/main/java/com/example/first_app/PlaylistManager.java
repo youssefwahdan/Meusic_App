@@ -2,6 +2,8 @@ package com.example.first_app;
 
 import android.content.Context;
 import androidx.lifecycle.LiveData;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -86,6 +88,23 @@ public class PlaylistManager {
                     }
                 });
             }
+        });
+    }
+
+    public void reorderPlaylist(int playlistId, List<Long> newSongOrder) {
+        executor.execute(() -> {
+            // 1. Clear the old order
+            playlistSongDao.deleteAllSongsInPlaylist(playlistId);
+
+            // 2. Create new entities with the correct orderIndex
+            List<PlaylistSongEntity> newEntities = new ArrayList<>();
+            int orderIndex = 0;
+            for (Long songId : newSongOrder) {
+                newEntities.add(new PlaylistSongEntity(playlistId, songId, orderIndex++));
+            }
+
+            // 3. Save the new order
+            playlistSongDao.insertAllPlaylistSongs(newEntities);
         });
     }
 

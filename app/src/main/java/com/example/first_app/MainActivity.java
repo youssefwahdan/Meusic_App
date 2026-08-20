@@ -2,6 +2,7 @@ package com.example.first_app;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -9,6 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.motion.widget.MotionLayout;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -61,6 +64,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // 1. Allow the app to draw behind the system bars
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
+        // 2. Set the bars to transparent
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        getWindow().setNavigationBarColor(Color.TRANSPARENT);
+
+        // 3. Make the status bar icons WHITE (since your app has a dark background)
+        WindowInsetsControllerCompat insetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        if (insetsController != null) {
+            insetsController.setAppearanceLightStatusBars(false);
+            insetsController.setAppearanceLightNavigationBars(false);
+        }
         setContentView(R.layout.activity_main);
 
         setupToolbar();
@@ -74,7 +90,15 @@ public class MainActivity extends AppCompatActivity {
         menuList.add(new MenuItem(R.drawable.ic_favorite, "Favourite", "0 songs"));
 //        menuList.add(new MenuItem(R.drawable.ic_recent, "Recently played", "644 songs"));
         menuList.add(new MenuItem(R.drawable.ic_settings, "Settings", ""));
-
+        adapter = new MenuAdapter(menuList, new MenuAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(MenuItem item, int position) {
+                // 2. THIS IS WHERE YOU HANDLE THE CLICK!
+                handleMenuClick(item, position);
+            }
+        });
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(adapter);
 
         // Initialize PlayerManager and PlayerComponent
         PlayerManager.getInstance().init(this);
@@ -86,15 +110,7 @@ public class MainActivity extends AppCompatActivity {
         PlayerManager.getInstance().setQueue(MusicLibrary.getInstance().getSongs());
         MusicLibrary.getInstance().getFavouritesCount(this, this, favouritesListener);
         MusicLibrary.getInstance().getPlaylistsCount(this, this, playlistslistener);
-        adapter = new MenuAdapter(menuList, new MenuAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(MenuItem item, int position) {
-                // 2. THIS IS WHERE YOU HANDLE THE CLICK!
-                handleMenuClick(item, position);
-            }
-        });
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(adapter);
+
     }
 
     private void handleMenuClick(MenuItem item, int position) {

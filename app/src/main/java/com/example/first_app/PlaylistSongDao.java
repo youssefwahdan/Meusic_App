@@ -22,4 +22,12 @@ public interface PlaylistSongDao {
 
     @Query("SELECT songId FROM playlist_songs WHERE playlistId = :playlistId ORDER BY orderIndex ASC LIMIT 1")
     Long getFirstSongInPlaylist(int playlistId);
+
+    // Delete all songs for a specific playlist (used before re-saving the new order)
+    @Query("DELETE FROM playlist_songs WHERE playlistId = :playlistId")
+    void deleteAllSongsInPlaylist(int playlistId);
+
+    // Re-insert songs with a new order (Room handles this efficiently)
+    @Insert
+    void insertAllPlaylistSongs(List<PlaylistSongEntity> playlistSongs);
 }

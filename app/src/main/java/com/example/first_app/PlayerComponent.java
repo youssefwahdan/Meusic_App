@@ -16,16 +16,21 @@ import android.widget.TextView;
 import androidx.constraintlayout.motion.widget.MotionLayout;
 import jp.wasabeef.blurry.Blurry;
 
-public class PlayerComponent implements PlayerManager.PlayerStateListener {
+public class PlayerComponent implements PlayerManager.PlayerStateListener , PlayerManager.OnPlaybackModeChangedListener {
     private MotionLayout motionLayout;
     private PlayerManager playerManager;
 
     private View mainContainer;
     private TextView titleText, artistText, currentTime, totalTime;
-    private ImageView artView, bgArtView, playBtn, prevBtn, nextBtn, downBtn, favBtn;
+    private ImageView artView, bgArtView, playBtn, prevBtn, nextBtn, downBtn, favBtn, playbackModeBtn;
     private SeekBar seekBar;
     private float startProgress = 0f;
     private long currentSongId = -1;
+
+    @Override
+    public void onPlaybackModeChanged(PlayerManager.PlaybackMode mode) {
+        updateModeIcon(mode);
+    }
 
     public PlayerComponent(MotionLayout motionLayout, PlayerManager playerManager) {
         this.motionLayout = motionLayout;
@@ -34,6 +39,15 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener {
         initViews();
         setupListeners();
         this.playerManager.addListener(this);
+
+        PlayerManager.getInstance().addModeListener(new PlayerManager.OnPlaybackModeChangedListener() {
+            @Override
+            public void onPlaybackModeChanged(PlayerManager.PlaybackMode mode) {
+                updateModeIcon(mode);
+            }
+        });
+        // Set the initial icon when the component is created
+        updateModeIcon(PlayerManager.getInstance().getPlaybackMode());
 
         onSongChanged(this.playerManager.getCurrentSong());
         onPlaybackStateChanged(this.playerManager.isPlaying());
@@ -53,6 +67,7 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener {
         currentTime = motionLayout.findViewById(R.id.current_time);
         totalTime = motionLayout.findViewById(R.id.total_time);
         favBtn = motionLayout.findViewById(R.id.favourite_icon);
+        playbackModeBtn = motionLayout.findViewById(R.id.playback_mode_btn);
 
     }
 
@@ -63,6 +78,12 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener {
 
         if (downBtn != null) {
             downBtn.setOnClickListener(v -> motionLayout.transitionToStart());
+        }
+
+        if (playbackModeBtn != null) {
+            playbackModeBtn.setOnClickListener(v -> {
+                PlayerManager.getInstance().cyclePlaybackMode();
+            });
         }
 
         if (favBtn != null) {
@@ -280,10 +301,33 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener {
                 });
     }
 
+    private void updateModeIcon(PlayerManager.PlaybackMode mode) {
+        if (playbackModeBtn == null) return;
+
+        switch (mode) {
+            case SHUFFLE:
+                playbackModeBtn.setImageResource(R.drawable.ic_shuffle); // Replace with your shuffle icon
+                playbackModeBtn.setAlpha(1.0f); // Fully opaque
+                break;
+            case REPEAT_NONE:
+                playbackModeBtn.setImageResource(R.drawable.ic_home); // Replace with straight arrow icon
+                playbackModeBtn.setAlpha(0.5f); // Dimmed to show it's "off"
+                break;
+            case REPEAT_ALL:
+                playbackModeBtn.setImageResource(R.drawable.ic_repeat); // Replace with repeat all icon
+                playbackModeBtn.setAlpha(1.0f);
+                break;
+            case REPEAT_ONE:
+                playbackModeBtn.setImageResource(R.drawable.ic_repeat_one); // Replace with repeat one icon (usually has a "1" in it)
+                playbackModeBtn.setAlpha(1.0f);
+                break;
+        }
+    }
     private float clamp(float value, float min, float max) {
         return Math.max(min, Math.min(max, value));
     }
     public void detach() {
         playerManager.removeListener(this);
+        PlayerManager.getInstance().removeModeListener(this);
     }
 }

@@ -57,7 +57,7 @@
         app:layout_constraintEnd_toEndOf="@id/main_container"
         app:layout_constraintStart_toStartOf="@id/main_container"
         app:layout_constraintTop_toTopOf="@id/main_container"
-        app:layout_constraintVertical_bias="0.15"
+        app:layout_constraintVertical_bias="0.2"
 
         />
 
@@ -205,6 +205,18 @@
         app:layout_constraintStart_toEndOf="@id/play_btn"
         app:layout_constraintTop_toTopOf="@id/play_btn"
        />
+    <ImageView
+        android:id="@+id/playback_mode_btn"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:padding="8dp"
+        android:src="@drawable/ic_repeat"
+        android:contentDescription="Playback Mode"
+        app:layout_constraintStart_toEndOf="@id/next_btn"
+        app:layout_constraintTop_toTopOf="@id/next_btn"
+        app:layout_constraintBottom_toBottomOf="@id/next_btn"
+        android:layout_marginStart="16dp"
+        app:tint="@color/primaryForeground" />
 
     <!-- 5. down Arrow -->
 
@@ -212,7 +224,8 @@
         android:id="@+id/down_btn"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_margin="20dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="50dp"
         android:contentDescription="Down Close Button"
         android:rotation="180"
         android:src="@drawable/ic_keyboard_arrow_up"

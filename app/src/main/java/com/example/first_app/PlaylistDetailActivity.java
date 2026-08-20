@@ -1,5 +1,6 @@
 package com.example.first_app;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -8,7 +9,10 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.motion.widget.MotionLayout;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.lifecycle.LiveData;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
@@ -28,6 +32,19 @@ public class PlaylistDetailActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // 1. Allow the app to draw behind the system bars
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
+        // 2. Set the bars to transparent
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        getWindow().setNavigationBarColor(Color.TRANSPARENT);
+
+        // 3. Make the status bar icons WHITE (since your app has a dark background)
+        WindowInsetsControllerCompat insetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        if (insetsController != null) {
+            insetsController.setAppearanceLightStatusBars(false);
+            insetsController.setAppearanceLightNavigationBars(false);
+        }
         setContentView(R.layout.activity_playlist_detail);
 
         playlistId = getIntent().getIntExtra("PLAYLIST_ID", -1);
@@ -96,10 +113,54 @@ public class PlaylistDetailActivity extends AppCompatActivity {
                     motionLayout.transitionToEnd();
                 });
                 recyclerView.setAdapter(adapter);
+
+                // DRAG AND DROP LOGIC
+                setupDragAndDrop(recyclerView);
             } else {
                 adapter.notifyDataSetChanged();
             }
         });
+    }
+    private void setupDragAndDrop(RecyclerView recyclerView) {
+        ItemTouchHelper.SimpleCallback simpleItemTouchCallback =
+                new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP | ItemTouchHelper.DOWN, 0) {
+
+                    @Override
+                    public boolean onMove(@NonNull RecyclerView recyclerView,
+                                          @NonNull RecyclerView.ViewHolder viewHolder,
+                                          @NonNull RecyclerView.ViewHolder target) {
+                        int fromPosition = viewHolder.getAdapterPosition();
+                        int toPosition = target.getAdapterPosition();
+
+                        // Tell the adapter to shift the items and animate
+                        adapter.onItemMove(fromPosition, toPosition);
+                        return true; // Return true to indicate the move was successful
+                    }
+
+                    @Override
+                    public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                        // We don't want swipe-to-delete, so leave this empty
+                    }
+
+                    @Override
+                    public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                        super.clearView(recyclerView, viewHolder);
+
+                        // This is called when the user drops the item.
+                        // Save the new order to the database!
+                        List<Long> newOrder = new ArrayList<>();
+                        for (Song song : adapter.getCurrentSongs()) {
+                            newOrder.add(song.getId());
+                        }
+
+                        // Save to database in the background
+                        PlaylistManager.getInstance(PlaylistDetailActivity.this)
+                                .reorderPlaylist(playlistId, newOrder);
+                    }
+                };
+
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
     }
 
     @Override

@@ -264,6 +264,23 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
         dialog.getWindow().setLayout(dialogWidth, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
     }
 
+
+    // 1. Add this method to handle the UI shift and animation
+    public void onItemMove(int fromPosition, int toPosition) {
+        if (fromPosition == toPosition) return;
+
+        // Remove the item from the old position and insert it at the new position
+        Song movedItem = songList.remove(fromPosition);
+        songList.add(toPosition, movedItem);
+
+        // Notify the RecyclerView to animate the move
+        notifyItemMoved(fromPosition, toPosition);
+    }
+
+    // 2. Add this getter so the Activity can read the new order after dragging
+    public List<Song> getCurrentSongs() {
+        return songList;
+    }
     private String formatDuration(long durationMs) {
         long totalSeconds = durationMs / 1000;
         long minutes = totalSeconds / 60;
