@@ -6,6 +6,8 @@ A modern, feature-rich Android music player built with Java and Android Jetpack 
 ![Java](https://img.shields.io/badge/Java-8+-blue.svg)
 ![Room](https://img.shields.io/badge/Room-Database-purple.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+[![Release](https://img.shields.io/github/v/release/youssefwahdan/Meusic_App)](https://github.com/youssefwahdan/Meusic_App/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/youssefwahdan/Meusic_App/total.svg)](https://github.com/youssefwahdan/Meusic_App/releases)
 
 ## ✨ Features
 
@@ -124,10 +126,26 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 👤 Author
-Youssef Khaled - ![Github](https://github.com/youssefwahdan)
+Youssef Khaled - [youssefwahdan](https://github.com/youssefwahdan)
 
 ---
 
+##  Download
+
+### Latest Release (v1.0.0)
+[![Download APK](https://img.shields.io/badge/Download-APK-brightgreen.svg?style=for-the-badge&logo=android)](https://github.com/youssefwahdan/Meusic_App/releases/latest/download/Meusic.v1.0.0.apk)
+
+**Direct Download:** [Meusic.apk](https://github.com/youssefwahdan/Meusic_App/releases/edit/V1.0.0/Meusic.v1.0.0.apk)
+
+### Installation Instructions
+1. Download the APK file
+2. Enable "Install from Unknown Sources" in your Android settings
+3. Open the downloaded file and tap "Install"
+4. Launch the app and grant storage permissions
+
+⚠️ **Note:** This app is for personal use only. Make sure to download from official releases only.
+
+---
 <div align="center">
 <strong>Made with ❤️ for music lovers</strong>
 </div>
