@@ -50,27 +50,27 @@ A modern, feature-rich Android music player built with Java and Android Jetpack 
    cd Meusic_App
 
 2. Open in Android Studio:
-- Launch Android Studio
-- Select "Open an existing project"
-- Navigate to the cloned directory
+  - Launch Android Studio
+  - Select "Open an existing project"
+  - Navigate to the cloned directory
 
 3. Build and Run:
-- Connect an Android device or start an emulator
-- Click "Run" (▶️) in Android Studio
-- Grant storage permissions when prompted
+  - Connect an Android device or start an emulator
+  - Click "Run" (▶️) in Android Studio
+  - Grant storage permissions when prompted
 
 ## Requirements
-- Android Studio Arctic Fox or later
-- Android SDK 21 (Android 5.0) or higher
-- Java 8 or higher
+  - Android Studio Arctic Fox or later
+  - Android SDK 21 (Android 5.0) or higher
+  - Java 8 or higher
 
 ## 🛠️ Tech Stack
-- Language: Java
-- Architecture: MVVM (Model-View-ViewModel)
-- Database: Room Persistence Library
-- UI Components: Android Jetpack (ViewModel, LiveData), RecyclerView, ViewPager2, MotionLayout, Material Design Components
-- Audio: MediaPlayer API
-- Async: ExecutorService
+  - Language: Java
+  - Architecture: MVVM (Model-View-ViewModel)
+  - Database: Room Persistence Library
+  - UI Components: Android Jetpack (ViewModel, LiveData), RecyclerView, ViewPager2, MotionLayout, Material Design Components
+  - Audio: MediaPlayer API
+  - Async: ExecutorService
   
 ## 📁 Project Structure
 app/
