@@ -73,6 +73,7 @@ A modern, feature-rich Android music player built with Java and Android Jetpack 
   - Async: ExecutorService
   
 ## 📁 Project Structure
+```
 app/
 ├── java/com/example/first_app/
 │   ├── Activities/
@@ -106,6 +107,7 @@ app/
     ├── layout/
     ├── drawable/
     └── values/
+```
 
 ## ⚠️ Disclaimer
 This app is for educational/portfolio purposes only. It plays music files stored locally on the user's device. The developer is not responsible for any copyrighted material played through this app.
