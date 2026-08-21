@@ -48,3 +48,84 @@ A modern, feature-rich Android music player built with Java and Android Jetpack 
    ```bash
    git clone https://github.com/youssefwahdan/Meusic_App
    cd Meusic_App
+
+2. Open in Android Studio:
+- Launch Android Studio
+- Select "Open an existing project"
+- Navigate to the cloned directory
+
+3. Build and Run:
+- Connect an Android device or start an emulator
+- Click "Run" (▶️) in Android Studio
+- Grant storage permissions when prompted
+
+## Requirements
+- Android Studio Arctic Fox or later
+- Android SDK 21 (Android 5.0) or higher
+- Java 8 or higher
+
+## 🛠️ Tech Stack
+- Language: Java
+- Architecture: MVVM (Model-View-ViewModel)
+- Database: Room Persistence Library
+- UI Components: Android Jetpack (ViewModel, LiveData), RecyclerView, ViewPager2, MotionLayout, Material Design Components
+- Audio: MediaPlayer API
+- Async: ExecutorService
+  
+## 📁 Project Structure
+app/
+├── java/com/example/first_app/
+│   ├── Activities/
+│   │   ├── AllSongsActivity.java
+│   │   ├── MainActivity.java
+│   │   ├── PlaylistDetailActivity.java
+│   │   └── ...
+│   ├── Fragments/
+│   │   ├── SongsFragment.java
+│   │   ├── ArtistsFragment.java
+│   │   ├── AlbumsFragment.java
+│   │   └── ...
+│   ├── Adapters/
+│   │   ├── SongAdapter.java
+│   │   ├── PlaylistAdapter.java
+│   │   └── ...
+│   ├── Database/
+│   │   ├── AppDatabase.java
+│   │   ├── FavoriteDao.java
+│   │   ├── PlaylistDao.java
+│   │   └── ...
+│   ├── Managers/
+│   │   ├── PlayerManager.java
+│   │   ├── MusicLibrary.java
+│   │   └── FavoriteManager.java
+│   └── Models/
+│       ├── Song.java
+│       ├── Playlist.java
+│       └── ...
+└── res/
+    ├── layout/
+    ├── drawable/
+    └── values/
+
+## ⚠️ Disclaimer
+This app is for educational/portfolio purposes only. It plays music files stored locally on the user's device. The developer is not responsible for any copyrighted material played through this app.
+
+## 🤝 Contributing
+Contributions are welcome! Please feel free to submit a Pull Request.
+1.Fork the project
+2. Create your feature branch (git checkout -b feature/AmazingFeature)
+3. Commit your changes (git commit -m 'Add some AmazingFeature')
+4. Push to the branch (git push origin feature/AmazingFeature)
+5. Open a Pull Request
+
+## 📄 License
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 👤 Author
+Youssef Khaled - ![Github](https://github.com/youssefwahdan)
+
+---
+
+<div align="center">
+<strong>Made with ❤️ for music lovers</strong>
+</div>
