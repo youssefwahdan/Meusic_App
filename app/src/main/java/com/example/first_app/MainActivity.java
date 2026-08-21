@@ -28,11 +28,15 @@ public class MainActivity extends AppCompatActivity {
     private PlayerComponent playerComponent;
     private MenuAdapter adapter;
     private List<MenuItem> menuList;
+    private AppStateManager stateManager;
 
     private final MusicLibrary.OnSongsLoadedListener songsListener = new MusicLibrary.OnSongsLoadedListener() {
         @Override
         public void onSongsLoaded(List<Song> songs) {
             adapter.updateSongCount(songs.size());
+            if (songs != null && !songs.isEmpty()) {
+                stateManager.restoreState(PlayerManager.getInstance(), songs);
+            }
         }
 
         @Override
@@ -105,11 +109,17 @@ public class MainActivity extends AppCompatActivity {
         motionLayout = findViewById(R.id.music_player_motionLayout);
         playerComponent = new PlayerComponent(motionLayout, PlayerManager.getInstance());
 
+        stateManager = new AppStateManager(this);
+
+        stateManager.restoreSortState(MusicLibrary.getInstance());
         // Load songs (handles permissions + fetching + caching automatically)
         MusicLibrary.getInstance().loadSongs(this, songsListener);
         PlayerManager.getInstance().setQueue(MusicLibrary.getInstance().getSongs());
         MusicLibrary.getInstance().getFavouritesCount(this, this, favouritesListener);
         MusicLibrary.getInstance().getPlaylistsCount(this, this, playlistslistener);
+
+        // Initialize PlayerManager
+        PlayerManager.getInstance().init(getApplicationContext());
 
     }
 
@@ -192,5 +202,15 @@ public class MainActivity extends AppCompatActivity {
         if (playerComponent != null) {
             playerComponent.detach();
         }
+        savePlayerState();
+    }
+    private void savePlayerState() {
+        PlayerManager manager = PlayerManager.getInstance();
+        stateManager.saveState(
+                manager.getPlaybackMode(),
+                manager.getCurrentIndex(), // Add this getter to PlayerManager
+                manager.getQueue(),         // Add this getter to PlayerManager
+                MusicLibrary.getInstance().getCurrentSortIndex()
+        );
     }
 }

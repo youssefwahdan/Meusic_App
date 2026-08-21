@@ -43,6 +43,13 @@ public class PlaybackService extends Service {
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
 
+        // Save state before killing the service
+        new AppStateManager(this).saveState(
+                PlayerManager.getInstance().getPlaybackMode(),
+                PlayerManager.getInstance().getCurrentIndex(),
+                PlayerManager.getInstance().getQueue(),
+                MusicLibrary.getInstance().getCurrentSortIndex()
+        );
         // 1. Stop the music and release resources
         PlayerManager.getInstance().releasePlayer();
 

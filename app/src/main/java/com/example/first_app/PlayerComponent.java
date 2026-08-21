@@ -310,7 +310,7 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener , Play
                 playbackModeBtn.setAlpha(1.0f); // Fully opaque
                 break;
             case REPEAT_NONE:
-                playbackModeBtn.setImageResource(R.drawable.ic_home); // Replace with straight arrow icon
+                playbackModeBtn.setImageResource(R.drawable.ic_trending_flat); // Replace with straight arrow icon
                 playbackModeBtn.setAlpha(0.5f); // Dimmed to show it's "off"
                 break;
             case REPEAT_ALL:

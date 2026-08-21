@@ -74,7 +74,7 @@ public class MusicLibrary {
     private final List<Song> songs = new ArrayList<>();
     private boolean isLoading = false;
     private boolean isLoaded = false;
-    private int currentSortIndex = 0;
+    private int currentSortIndex = -1;
 
 
     public interface OnSongsLoadedListener {
@@ -153,6 +153,10 @@ public class MusicLibrary {
                 songs.addAll(fetchedSongs);
                 isLoaded = true;
                 isLoading = false;
+
+                if (currentSortIndex != -1) {
+                    sortSongs(currentSortIndex);
+                }
 
                 new Handler(Looper.getMainLooper()).post(() -> {
                     if (listener != null) listener.onSongsLoaded(songs);
@@ -383,4 +387,11 @@ public class MusicLibrary {
         });
     }
 
+    public int getCurrentSortIndex() {
+        return currentSortIndex;
+    }
+
+    public void setCurrentSortIndex(int currentSortIndex) {
+        this.currentSortIndex = currentSortIndex;
+    }
 }

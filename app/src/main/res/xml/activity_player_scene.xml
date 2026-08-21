@@ -125,12 +125,12 @@
             motion:layout_constraintStart_toEndOf="@id/art_container"
             motion:layout_constraintTop_toBottomOf="@id/song_title"
             motion:layout_constraintStart_toStartOf="@id/song_title"
+            motion:layout_constraintEnd_toEndOf="@id/song_title"
             android:layout_marginTop="5dp"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:maxLines="1"
             android:ellipsize="end"
-
             >
             <CustomAttribute motion:attributeName="textSize" motion:customFloatValue="12"/>
 

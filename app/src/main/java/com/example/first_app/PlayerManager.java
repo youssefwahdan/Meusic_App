@@ -93,7 +93,7 @@ public class PlayerManager {
     public void playSong(Song song, List<Song> newQueue) {
         this.queue = newQueue;
         this.currentIndex = newQueue.indexOf(song);
-        prepareAndPlay(song);
+        prepareAndPlay(song, true);
     }
 
     public void playPause() {
@@ -103,7 +103,7 @@ public class PlayerManager {
                 return;
             } else {
                 currentIndex = 0;
-                prepareAndPlay(this.queue.get(currentIndex));
+                prepareAndPlay(this.queue.get(currentIndex), true);
                 return;
             }
         }
@@ -170,7 +170,7 @@ public class PlayerManager {
                 currentIndex++; // Normal next
             }
         }
-        prepareAndPlay(queue.get(currentIndex));
+        prepareAndPlay(queue.get(currentIndex), true);
     }
 
     public void prev() {
@@ -211,7 +211,7 @@ public class PlayerManager {
                     currentIndex--; // Normal prev
                 }
             }
-            prepareAndPlay(queue.get(currentIndex));
+            prepareAndPlay(queue.get(currentIndex), true);
     }
 
     public void seekTo(int positionMs) {
@@ -225,7 +225,7 @@ public class PlayerManager {
     public boolean isPlaying() { return isPlaying; }
     public Song getCurrentSong() { return queue != null && currentIndex != -1 ? queue.get(currentIndex) : null; }
 
-    private void prepareAndPlay(Song song) {
+    private void prepareAndPlay(Song song, Boolean autoPlay) {
         releasePlayer();
         if (!requestAudioFocus()) {
             Toast.makeText(appContext, "Audio focus not granted", Toast.LENGTH_SHORT).show();
@@ -243,8 +243,12 @@ public class PlayerManager {
             mediaPlayer.setDataSource(appContext, trackUri);
 
             mediaPlayer.setOnPreparedListener(mp -> {
-                mp.start();
-                isPlaying = true;
+                if (autoPlay) {
+                    mp.start();
+                    isPlaying = true;
+                } else {
+                    isPlaying = false;
+                }
                 acquireWakeLock();
 
                 updateMediaSessionMetadata(song);
@@ -486,6 +490,10 @@ public class PlayerManager {
         }
         notifyPlaybackModeChanged();
     }
+    public void setPlaybackMode(PlaybackMode mode) {
+        this.playbackMode = mode;
+        notifyPlaybackModeChanged();
+    }
 
     public PlaybackMode getPlaybackMode() {
         return playbackMode;
@@ -514,5 +522,19 @@ public class PlayerManager {
         // 5. Clear the queue and state
         queue = null;
         currentIndex = -1;
+    }
+    public void setCurrentSong(Song song, List<Song> queue) {
+        this.queue = queue;
+        this.currentIndex = queue.indexOf(song);
+
+        // Pass 'false' to prepare the song and update UI, but DO NOT play it
+        prepareAndPlay(song, false);
+    }
+    public int getCurrentIndex() {
+        return currentIndex;
+    }
+
+    public List<Song> getQueue() {
+        return queue;
     }
 }
