@@ -124,7 +124,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 👤 Author
-Youssef Khaled - ![Github](https://github.com/youssefwahdan)
+Youssef Khaled - [youssefwahdan](https://github.com/youssefwahdan)
 
 ---
 
