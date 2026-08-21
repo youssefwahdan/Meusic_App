@@ -40,7 +40,7 @@ A modern, feature-rich Android music player built with Java and Android Jetpack 
   <img src="screenshots/home.jpg" width="200" alt="Home Screen"/>
   <img src="screenshots/player.jpg" width="200" alt="Player Screen"/>
   <img src="screenshots/playlists.jpg" width="200" alt="Playlists"/>
-  <img src="screenshots/favourites.jpg" width="200" alt="Favorites"/>
+  <img src="screenshots/favourites.jpg" width="200" alt="Favourites"/>
 </div>
 
 ##  Installation
