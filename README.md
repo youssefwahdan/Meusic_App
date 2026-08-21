@@ -128,6 +128,22 @@ Youssef Khaled - [youssefwahdan](https://github.com/youssefwahdan)
 
 ---
 
+##  Download
+
+### Latest Release (v1.0.0)
+[![Download APK](https://img.shields.io/badge/Download-APK-brightgreen.svg?style=for-the-badge&logo=android)](https://github.com/youssefwahdan/Meusic_App/releases/latest/download/app-release.apk)
+
+**Direct Download:** [app-release.apk](https://github.com/youssefwahdan/Meusic_App/releases/download/v1.0.0/app-release.apk)
+
+### Installation Instructions
+1. Download the APK file
+2. Enable "Install from Unknown Sources" in your Android settings
+3. Open the downloaded file and tap "Install"
+4. Launch the app and grant storage permissions
+
+⚠️ **Note:** This app is for personal use only. Make sure to download from official releases only.
+
+---
 <div align="center">
 <strong>Made with ❤️ for music lovers</strong>
 </div>
