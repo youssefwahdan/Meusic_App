@@ -6,7 +6,7 @@ A modern, feature-rich Android music player built with Java and Android Jetpack 
 ![Java](https://img.shields.io/badge/Java-8+-blue.svg)
 ![Room](https://img.shields.io/badge/Room-Database-purple.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-[![Release](https://img.shields.io/github/v/release/youssefwahdan/Meusic_App?label=Latest%20Version&style=for-the-badge)](https://github.com/youssefwahdan/Meusic_App/releases/latest)
+[![Release](https://img.shields.io/github/v/release/youssefwahdan/Meusic_App)](https://github.com/youssefwahdan/Meusic_App/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/youssefwahdan/Meusic_App/total.svg)](https://github.com/youssefwahdan/Meusic_App/releases)
 
 ## ✨ Features
