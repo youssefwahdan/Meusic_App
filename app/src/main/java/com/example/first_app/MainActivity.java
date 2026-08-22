@@ -37,6 +37,10 @@ public class MainActivity extends AppCompatActivity {
             if (songs != null && !songs.isEmpty()) {
                 stateManager.restoreState(PlayerManager.getInstance(), songs);
             }
+            if (PlayerManager.getInstance().getQueue() == null || PlayerManager.getInstance().getQueue().isEmpty()) {
+                PlayerManager.getInstance().setQueue(songs);
+            }
+
         }
 
         @Override
@@ -111,15 +115,10 @@ public class MainActivity extends AppCompatActivity {
 
         stateManager = new AppStateManager(this);
 
-        stateManager.restoreSortState(MusicLibrary.getInstance());
         // Load songs (handles permissions + fetching + caching automatically)
         MusicLibrary.getInstance().loadSongs(this, songsListener);
-        PlayerManager.getInstance().setQueue(MusicLibrary.getInstance().getSongs());
         MusicLibrary.getInstance().getFavouritesCount(this, this, favouritesListener);
         MusicLibrary.getInstance().getPlaylistsCount(this, this, playlistslistener);
-
-        // Initialize PlayerManager
-        PlayerManager.getInstance().init(getApplicationContext());
 
     }
 

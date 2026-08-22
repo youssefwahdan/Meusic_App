@@ -82,7 +82,10 @@ public class PlayerManager {
         }
     }
 
-    public void setQueue(List<Song> currentQueue) { this.queue = currentQueue; }
+    public void setQueue(List<Song> currentQueue) {
+        this.queue = currentQueue;
+    //
+    }
     public void addListener(PlayerStateListener listener) { if (!listeners.contains(listener)) listeners.add(listener); }
     public void removeListener(PlayerStateListener listener) { listeners.remove(listener); }
     public MediaSessionCompat.Token getSessionToken() { return mediaSession != null ? mediaSession.getSessionToken() : null; }
@@ -223,7 +226,9 @@ public class PlayerManager {
     }
 
     public boolean isPlaying() { return isPlaying; }
-    public Song getCurrentSong() { return queue != null && currentIndex != -1 ? queue.get(currentIndex) : null; }
+    public Song getCurrentSong() {
+        return queue != null && currentIndex != -1 ? queue.get(currentIndex) : null;
+    }
 
     private void prepareAndPlay(Song song, Boolean autoPlay) {
         releasePlayer();
@@ -524,7 +529,7 @@ public class PlayerManager {
         currentIndex = -1;
     }
     public void setCurrentSong(Song song, List<Song> queue) {
-        this.queue = queue;
+        setQueue(queue);
         this.currentIndex = queue.indexOf(song);
 
         // Pass 'false' to prepare the song and update UI, but DO NOT play it
