@@ -135,7 +135,7 @@ Youssef Khaled - [youssefwahdan](https://github.com/youssefwahdan)
 ### Latest Release (v1.0.1)
 [![Download APK](https://img.shields.io/badge/Download-APK-brightgreen.svg?style=for-the-badge&logo=android)](https://github.com/youssefwahdan/Meusic_App/releases/latest/download/Meusic.v1.0.1.apk)
 
-**Direct Download:** [Meusic.apk](https://github.com/youssefwahdan/Meusic_App/releases/edit/V1.0.0/Meusic.v1.0.0.apk)
+**Direct Download:** [Meusic.apk](https://github.com/youssefwahdan/Meusic_App/releases/edit/V1.0.1/Meusic.v1.0.1.apk)
 
 ### Installation Instructions
 1. Download the APK file
