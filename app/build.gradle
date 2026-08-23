@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.first_app'
+    namespace 'com.example.meusic'
     compileSdk 37
 
     defaultConfig {
-        applicationId "com.example.first_app"
+        applicationId "com.example.meusic"
         minSdk 24
         targetSdk 37
         versionCode 1
