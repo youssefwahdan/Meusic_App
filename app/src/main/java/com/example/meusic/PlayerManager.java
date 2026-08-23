@@ -2,24 +2,26 @@ package com.example.meusic;
 
 import android.content.ContentUris;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.provider.MediaStore;
-import android.support.v4.media.MediaMetadataCompat;
-import android.support.v4.media.session.MediaSessionCompat;
-import android.support.v4.media.session.PlaybackStateCompat;
 import android.widget.Toast;
+
+import androidx.media3.common.C;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.MediaMetadata;
+import androidx.media3.common.Player;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.session.MediaSession;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,37 +29,32 @@ import java.util.List;
 public class PlayerManager {
     private static PlayerManager instance;
     private Context appContext;
-    private MediaPlayer mediaPlayer;
+    private ExoPlayer player;
     private List<Song> queue;
     private int currentIndex = -1;
     private boolean isPlaying = false;
 
-    private Handler handler = new Handler(Looper.getMainLooper());
+    private final Handler handler = new Handler(Looper.getMainLooper());
     private Runnable updateProgressRunnable;
 
     private AudioManager audioManager;
     private AudioFocusRequest audioFocusRequest;
-    private MediaSessionCompat mediaSession;
+    private MediaSession mediaSession;
     private PowerManager.WakeLock wakeLock;
 
-    // Cache the current album art for the notification
     private Bitmap currentAlbumArt;
 
     public enum PlaybackMode {
-        SHUFFLE,          // Shuffle
-        REPEAT_NONE,      // Straight and stop
-        REPEAT_ALL,       // Straight and loop
-        REPEAT_ONE        // Loop on current song
+        SHUFFLE, REPEAT_NONE, REPEAT_ALL, REPEAT_ONE
     }
 
-    private PlaybackMode playbackMode = PlaybackMode.REPEAT_ALL; // Default to straight and loop
+    private PlaybackMode playbackMode = PlaybackMode.REPEAT_ALL;
 
-    // Listeners to notify the UI when the mode changes
     public interface OnPlaybackModeChangedListener {
         void onPlaybackModeChanged(PlaybackMode mode);
     }
-    private final List<OnPlaybackModeChangedListener> modeListeners = new ArrayList<>();
 
+    private final List<OnPlaybackModeChangedListener> modeListeners = new ArrayList<>();
     private final List<PlayerStateListener> listeners = new ArrayList<>();
 
     public interface PlayerStateListener {
@@ -75,59 +72,131 @@ public class PlayerManager {
 
     public void init(Context context) {
         if (appContext == null) {
-            this.appContext = context.getApplicationContext();
-            this.audioManager = (AudioManager) appContext.getSystemService(Context.AUDIO_SERVICE);
-            setupMediaSession();
+            appContext = context.getApplicationContext();
+            audioManager = (AudioManager) appContext.getSystemService(Context.AUDIO_SERVICE);
             setupWakeLock();
+            buildPlayer();
         }
+    }
+
+    private void buildPlayer() {
+        if (player != null) return;
+
+        androidx.media3.common.AudioAttributes attributes =
+                new androidx.media3.common.AudioAttributes.Builder()
+                        .setUsage(C.USAGE_MEDIA)
+                        .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                        .build();
+
+        player = new ExoPlayer.Builder(appContext)
+                .setAudioAttributes(attributes, true)
+                .build();
+
+        player.addListener(new Player.Listener() {
+            @Override
+            public void onIsPlayingChanged(boolean playing) {
+                isPlaying = playing;
+                if (playing) {
+                    acquireWakeLock();
+                    startProgressUpdate();
+                } else {
+                    releaseWakeLock();
+                    stopProgressUpdate();
+                }
+                notifyPlaybackState();
+                updateServiceNotification();
+            }
+
+            @Override
+            public void onMediaItemTransition(MediaItem mediaItem, int reason) {
+                int index = player.getCurrentMediaItemIndex();
+                if (index >= 0 && queue != null && index < queue.size()) {
+                    currentIndex = index;
+                    updateCurrentSongMetadata();
+                    notifySongChanged();
+                }
+            }
+
+            @Override
+            public void onPlaybackStateChanged(int state) {
+                if (state == Player.STATE_ENDED && playbackMode == PlaybackMode.REPEAT_NONE) {
+                    isPlaying = false;
+                    notifyPlaybackState();
+                }
+            }
+        });
+
+        applyPlaybackMode();
+    }
+
+    public ExoPlayer getPlayer() {
+        if (player == null && appContext != null) buildPlayer();
+        return player;
+    }
+
+    public MediaSession getMediaSession() {
+        return mediaSession;
+    }
+
+    public void setMediaSession(MediaSession session) {
+        if (mediaSession != null && mediaSession != session) mediaSession.release();
+        mediaSession = session;
     }
 
     public void setQueue(List<Song> currentQueue) {
-        this.queue = currentQueue;
-    //
+        queue = currentQueue;
     }
-    public void addListener(PlayerStateListener listener) { if (!listeners.contains(listener)) listeners.add(listener); }
-    public void removeListener(PlayerStateListener listener) { listeners.remove(listener); }
-    public MediaSessionCompat.Token getSessionToken() { return mediaSession != null ? mediaSession.getSessionToken() : null; }
 
-    // NEW: Getter for the notification to use
-    public Bitmap getCurrentAlbumArt() { return currentAlbumArt; }
+    public void addListener(PlayerStateListener listener) {
+        if (!listeners.contains(listener)) listeners.add(listener);
+    }
+
+    public void removeListener(PlayerStateListener listener) {
+        listeners.remove(listener);
+    }
+
+    public Bitmap getCurrentAlbumArt() {
+        return currentAlbumArt;
+    }
 
     public void playSong(Song song, List<Song> newQueue) {
-        this.queue = newQueue;
-        this.currentIndex = newQueue.indexOf(song);
-        prepareAndPlay(song, true);
+        if (appContext == null) return;
+        queue = newQueue;
+        currentIndex = newQueue.indexOf(song);
+        if (currentIndex < 0) return;
+
+        buildPlayer();
+        List<MediaItem> items = new ArrayList<>();
+        for (Song s : newQueue) items.add(createMediaItem(s));
+
+        player.setMediaItems(items, currentIndex, 0);
+        applyPlaybackMode();
+        player.prepare();
+        player.play();
+
+        updateCurrentSongMetadata();
+        notifySongChanged();
+        updateServiceNotification();
     }
 
     public void playPause() {
-        if (mediaPlayer == null) {
-            if (this.queue == null || this.queue.isEmpty()) {
-                Toast.makeText(appContext, "There are no songs", Toast.LENGTH_LONG).show();
-                return;
-            } else {
-                currentIndex = 0;
-                prepareAndPlay(this.queue.get(currentIndex), true);
-                return;
-            }
+        buildPlayer();
+        if (player == null) return;
+
+        if (queue == null || queue.isEmpty()) {
+            Toast.makeText(appContext, "There are no songs", Toast.LENGTH_LONG).show();
+            return;
         }
 
-        if (isPlaying) {
-            mediaPlayer.pause();
-            isPlaying = false;
-            stopProgressUpdate();
-            releaseWakeLock();
-        } else {
-            if (requestAudioFocus()) {
-                mediaPlayer.start();
-                isPlaying = true;
-                acquireWakeLock();
-                startProgressUpdate();
-            }
+        if (player.getPlaybackState() == Player.STATE_IDLE) {
+            playSong(queue.get(Math.max(0, currentIndex)), queue);
+            return;
         }
-        updateMediaSessionState();
-        notifyPlaybackState();
+
+        if (player.isPlaying()) player.pause();
+        else player.play();
+
         updateServiceNotification();
-        refreshNotificationUI();
     }
 
     public void stopPlayback() {
@@ -136,173 +205,117 @@ public class PlayerManager {
     }
 
     public void next() {
-        if (queue == null || queue.isEmpty()) {
-            stopPlayback(); // Queue ended! NOW we stop the service and notification.
-            return;
-        }
+        if (queue == null || queue.isEmpty()) return;
+        buildPlayer();
+        if (player == null) return;
+
         if (playbackMode == PlaybackMode.REPEAT_ONE) {
-            // Loop current song: just seek to 0 and play
-            if (mediaPlayer != null) {
-                mediaPlayer.seekTo(0);
-                mediaPlayer.start();
-                isPlaying = true;
-                notifyPlaybackState();
-            }
+            player.seekTo(0);
+            player.play();
             return;
         }
 
-        if (playbackMode == PlaybackMode.SHUFFLE) {
-            // Pick a random song that isn't the current one
-            if (queue.size() > 1) {
-                int nextIndex;
-                do {
-                    nextIndex = new java.util.Random().nextInt(queue.size());
-                } while (nextIndex == currentIndex);
-                currentIndex = nextIndex;
-            }
+        if (player.hasNextMediaItem()) {
+            player.seekToNextMediaItem();
+            player.play();
+        } else if (playbackMode == PlaybackMode.REPEAT_ALL) {
+            player.seekToDefaultPosition(0);
+            player.play();
         } else {
-            // REPEAT_ALL or REPEAT_NONE (Straight)
-            if (currentIndex >= queue.size() - 1) {
-                if (playbackMode == PlaybackMode.REPEAT_NONE) {
-                    stopPlayback(); // Straight and stop
-                    return;
-                } else {
-                    currentIndex = 0; // Straight and loop back to start
-                }
-            } else {
-                currentIndex++; // Normal next
-            }
+            stopPlayback();
         }
-        prepareAndPlay(queue.get(currentIndex), true);
     }
 
     public void prev() {
-        if (queue == null || queue.isEmpty()){
-            stopPlayback();
+        if (queue == null || queue.isEmpty()) return;
+        buildPlayer();
+        if (player == null) return;
+
+        if (playbackMode == PlaybackMode.REPEAT_ONE) {
+            player.seekTo(0);
+            player.play();
             return;
         }
-            if (playbackMode == PlaybackMode.REPEAT_ONE) {
-                // Loop current song: just seek to 0 and play
-                if (mediaPlayer != null) {
-                    mediaPlayer.seekTo(0);
-                    mediaPlayer.start();
-                    isPlaying = true;
-                    notifyPlaybackState();
-                }
-                return;
-            }
 
-            if (playbackMode == PlaybackMode.SHUFFLE) {
-                // Pick a random song that isn't the current one
-                if (queue.size() > 1) {
-                    int prevIndex;
-                    do {
-                        prevIndex = new java.util.Random().nextInt(queue.size());
-                    } while (prevIndex == currentIndex);
-                    currentIndex = prevIndex;
-                }
-            } else {
-                // REPEAT_ALL or REPEAT_NONE (Straight)
-                if (currentIndex <= 0) {
-                    if (playbackMode == PlaybackMode.REPEAT_NONE) {
-                        stopPlayback(); // Straight and stop
-                        return;
-                    } else {
-                        currentIndex = queue.size() - 1; // Straight and loop to end
-                    }
-                } else {
-                    currentIndex--; // Normal prev
-                }
-            }
-            prepareAndPlay(queue.get(currentIndex), true);
+        if (player.hasPreviousMediaItem()) {
+            player.seekToPreviousMediaItem();
+            player.play();
+        } else if (playbackMode == PlaybackMode.REPEAT_ALL) {
+            player.seekToDefaultPosition(queue.size() - 1);
+            player.play();
+        } else {
+            player.seekTo(0);
+        }
     }
 
     public void seekTo(int positionMs) {
-        if (mediaPlayer != null) {
-            mediaPlayer.seekTo(positionMs);
-            updateMediaSessionState();
-            notifyProgress();
-        }
+        if (player != null) player.seekTo(positionMs);
     }
 
-    public boolean isPlaying() { return isPlaying; }
+    public boolean isPlaying() {
+        return player != null && player.isPlaying();
+    }
+
     public Song getCurrentSong() {
-        return queue != null && currentIndex != -1 ? queue.get(currentIndex) : null;
+        return queue != null && currentIndex >= 0 && currentIndex < queue.size()
+                ? queue.get(currentIndex) : null;
     }
 
-    private void prepareAndPlay(Song song, Boolean autoPlay) {
-        releasePlayer();
-        if (!requestAudioFocus()) {
-            Toast.makeText(appContext, "Audio focus not granted", Toast.LENGTH_SHORT).show();
-            return;
-        }
+    private MediaItem createMediaItem(Song song) {
+        Uri trackUri = ContentUris.withAppendedId(
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song.getId());
 
-        try {
-            mediaPlayer = new MediaPlayer();
-            mediaPlayer.setAudioAttributes(new AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build());
-            mediaPlayer.setWakeMode(appContext, PowerManager.PARTIAL_WAKE_LOCK);
+        return new MediaItem.Builder()
+                .setMediaId(String.valueOf(song.getId()))
+                .setUri(trackUri)
+                .setMediaMetadata(new MediaMetadata.Builder()
+                        .setTitle(song.getTitle())
+                        .setArtist(song.getArtist())
+                        .setAlbumTitle(song.getAlbum())
+                        .build())
+                .build();
+    }
 
-            Uri trackUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song.getId());
-            mediaPlayer.setDataSource(appContext, trackUri);
-
-            mediaPlayer.setOnPreparedListener(mp -> {
-                if (autoPlay) {
-                    mp.start();
-                    isPlaying = true;
-                } else {
-                    isPlaying = false;
-                }
-                acquireWakeLock();
-
-                updateMediaSessionMetadata(song);
-                updateMediaSessionState();
-
-                notifySongChanged();
-                notifyPlaybackState();
-                startProgressUpdate();
-                updateServiceNotification();
-                refreshNotificationUI();
-            });
-
-            mediaPlayer.setOnCompletionListener(mp -> next());
-            mediaPlayer.prepareAsync();
-        } catch (Exception e) {
-            e.printStackTrace();
-            releasePlayer();
-        }
+    private void updateCurrentSongMetadata() {
+        Song song = getCurrentSong();
+        if (song != null) currentAlbumArt = getAlbumArtBitmap(song);
     }
 
     public void releasePlayer() {
         stopProgressUpdate();
-        if (mediaPlayer != null) {
-            try { if (mediaPlayer.isPlaying()) mediaPlayer.stop(); } catch (Exception ignored) {}
-            mediaPlayer.release();
-            mediaPlayer = null;
+        if (player != null) {
+            player.stop();
+            player.clearMediaItems();
+            player.release();
+            player = null;
         }
         isPlaying = false;
         abandonAudioFocus();
         releaseWakeLock();
-//        stopService();
         notifyPlaybackState();
     }
 
     private boolean requestAudioFocus() {
         if (audioManager == null) return true;
-        AudioAttributes attributes = new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build();
+
+        android.media.AudioAttributes attributes = new android.media.AudioAttributes.Builder()
+                .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             audioFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                     .setAudioAttributes(attributes)
                     .setOnAudioFocusChangeListener(audioFocusChangeListener)
                     .build();
-            return audioManager.requestAudioFocus(audioFocusRequest) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
-        } else {
-            return audioManager.requestAudioFocus(audioFocusChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
+            return audioManager.requestAudioFocus(audioFocusRequest)
+                    == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
         }
+
+        return audioManager.requestAudioFocus(
+                audioFocusChangeListener, AudioManager.STREAM_MUSIC,
+                AudioManager.AUDIOFOCUS_GAIN)
+                == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
     }
 
     private void abandonAudioFocus() {
@@ -314,98 +327,73 @@ public class PlayerManager {
         }
     }
 
-    private final AudioManager.OnAudioFocusChangeListener audioFocusChangeListener = focusChange -> {
-        switch (focusChange) {
-            case AudioManager.AUDIOFOCUS_GAIN:
-                if (mediaPlayer != null) mediaPlayer.setVolume(1.0f, 1.0f);
-                break;
-            case AudioManager.AUDIOFOCUS_LOSS:
-                if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-                    mediaPlayer.pause();
-                    isPlaying = false;
-                    notifyPlaybackState();
-                    updateMediaSessionState();
-                    updateServiceNotification();
-                }
-                abandonAudioFocus();
-                break;
-            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-                    mediaPlayer.pause();
-                    isPlaying = false;
-                    notifyPlaybackState();
-                    updateMediaSessionState();
-                    updateServiceNotification();
-                }
-                break;
-            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-                if (mediaPlayer != null) mediaPlayer.setVolume(0.2f, 0.2f);
-                break;
+    private final AudioManager.OnAudioFocusChangeListener audioFocusChangeListener = focus -> {
+        if (player == null) return;
+        if (focus == AudioManager.AUDIOFOCUS_LOSS ||
+                focus == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+            player.pause();
+        } else if (focus == AudioManager.AUDIOFOCUS_GAIN) {
+            player.setVolume(1f);
+        } else if (focus == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
+            player.setVolume(0.2f);
         }
     };
 
-    private void setupMediaSession() {
-        mediaSession = new MediaSessionCompat(appContext, "MusicPlayerSession");
-        mediaSession.setActive(true);
-    }
-
-    private void updateMediaSessionMetadata(Song song) {
-        if (mediaSession == null || song == null) return;
-
-        // Fetch and SCALE DOWN the album art (Critical for notifications)
-        currentAlbumArt = getAlbumArtBitmap(song);
-
-        MediaMetadataCompat.Builder builder = new MediaMetadataCompat.Builder()
-                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, song.getTitle())
-                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, song.getArtist())
-                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, song.getAlbum())
-                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, song.getDuration());
-
-        if (currentAlbumArt != null) {
-            builder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, currentAlbumArt);
-            builder.putBitmap(MediaMetadataCompat.METADATA_KEY_ART, currentAlbumArt);
-        }
-        mediaSession.setMetadata(builder.build());
-    }
-
     private Bitmap getAlbumArtBitmap(Song song) {
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         try {
-            Uri trackUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song.getId());
-            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-            retriever.setDataSource(appContext, trackUri);
+            Uri uri = ContentUris.withAppendedId(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song.getId());
+            retriever.setDataSource(appContext, uri);
             byte[] art = retriever.getEmbeddedPicture();
             if (art != null) {
                 Bitmap bitmap = BitmapFactory.decodeByteArray(art, 0, art.length);
-                // SCALE DOWN to 256x256. Notifications will silently reject huge bitmaps!
                 return Bitmap.createScaledBitmap(bitmap, 256, 256, true);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ignored) {
+        } finally {
+            try { retriever.release(); } catch (Exception ignored) {}
         }
         return null;
     }
 
-    private void updateMediaSessionState() {
-        if (mediaSession == null) return;
-        int state = isPlaying ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED;
-        long position = mediaPlayer != null ? mediaPlayer.getCurrentPosition() : 0;
+    private void applyPlaybackMode() {
+        if (player == null) return;
 
-        PlaybackStateCompat playbackState = new PlaybackStateCompat.Builder()
-                .setState(state, position, 1.0f)
-                .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE |
-                        PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
-                        PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS | PlaybackStateCompat.ACTION_STOP)
-                .build();
-        mediaSession.setPlaybackState(playbackState);
+        switch (playbackMode) {
+            case REPEAT_ONE:
+                player.setRepeatMode(Player.REPEAT_MODE_ONE);
+                player.setShuffleModeEnabled(false);
+                break;
+            // But REPEAT_NONE here until i Fix it
+            case REPEAT_NONE:
+            case REPEAT_ALL:
+                player.setRepeatMode(Player.REPEAT_MODE_ALL);
+                player.setShuffleModeEnabled(false);
+                break;
+            case SHUFFLE:
+                player.setRepeatMode(Player.REPEAT_MODE_ALL);
+                player.setShuffleModeEnabled(true);
+                break;
+//            case REPEAT_NONE:
+//                player.setRepeatMode(Player.REPEAT_MODE_OFF);
+//                player.setShuffleModeEnabled(false);
+//                break;
+        }
     }
 
     private void setupWakeLock() {
         PowerManager pm = (PowerManager) appContext.getSystemService(Context.POWER_SERVICE);
-        if (pm != null) wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyApp::MusicWakeLock");
+        if (pm != null) {
+            wakeLock = pm.newWakeLock(
+                    PowerManager.PARTIAL_WAKE_LOCK, "MyApp::MusicWakeLock");
+        }
     }
 
     private void acquireWakeLock() {
-        if (wakeLock != null && !wakeLock.isHeld()) wakeLock.acquire(10 * 60 * 1000L);
+        if (wakeLock != null && !wakeLock.isHeld()) {
+            wakeLock.acquire(10 * 60 * 1000L);
+        }
     }
 
     private void releaseWakeLock() {
@@ -413,17 +401,9 @@ public class PlayerManager {
     }
 
     private void updateServiceNotification() {
-        Intent intent = new Intent(appContext, PlaybackService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            appContext.startForegroundService(intent);
-        } else {
-            appContext.startService(intent);
-        }
-    }
-    public void refreshNotificationUI() {
-        // This tells the service to rebuild the RemoteViews with the latest data
-        Intent intent = new Intent(appContext, PlaybackService.class);
-        intent.setAction("UPDATE_UI");
+        if (appContext == null) return;
+        android.content.Intent intent = new android.content.Intent(
+                appContext, PlaybackService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             appContext.startForegroundService(intent);
         } else {
@@ -432,34 +412,46 @@ public class PlayerManager {
     }
 
     private void stopService() {
-        appContext.stopService(new Intent(appContext, PlaybackService.class));
+        if (appContext != null) {
+            appContext.stopService(new android.content.Intent(
+                    appContext, PlaybackService.class));
+        }
     }
 
     private void startProgressUpdate() {
-        updateProgressRunnable = () -> {
-            if (mediaPlayer != null && isPlaying) notifyProgress();
-            handler.postDelayed(updateProgressRunnable, 1000);
+        if (updateProgressRunnable != null) return;
+        updateProgressRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (player != null && player.isPlaying()) notifyProgress();
+                handler.postDelayed(this, 1000);
+            }
         };
         handler.post(updateProgressRunnable);
     }
 
     private void stopProgressUpdate() {
-        if (updateProgressRunnable != null) handler.removeCallbacks(updateProgressRunnable);
+        if (updateProgressRunnable != null) {
+            handler.removeCallbacks(updateProgressRunnable);
+            updateProgressRunnable = null;
+        }
     }
 
     private void notifySongChanged() {
         Song song = getCurrentSong();
-        if (song != null) for (PlayerStateListener l : listeners) l.onSongChanged(song);
+        if (song != null) {
+            for (PlayerStateListener l : listeners) l.onSongChanged(song);
+        }
     }
 
     private void notifyPlaybackState() {
-        for (PlayerStateListener l : listeners) l.onPlaybackStateChanged(isPlaying);
+        for (PlayerStateListener l : listeners) l.onPlaybackStateChanged(isPlaying());
     }
 
     private void notifyProgress() {
-        if (mediaPlayer != null) {
-            int current = mediaPlayer.getCurrentPosition();
-            int total = mediaPlayer.getDuration();
+        if (player != null && player.getDuration() != C.TIME_UNSET) {
+            int current = (int) player.getCurrentPosition();
+            int total = (int) player.getDuration();
             for (PlayerStateListener l : listeners) l.onProgressChanged(current, total);
         }
     }
@@ -473,30 +465,25 @@ public class PlayerManager {
     }
 
     private void notifyPlaybackModeChanged() {
-        for (OnPlaybackModeChangedListener listener : modeListeners) {
-            listener.onPlaybackModeChanged(playbackMode);
+        for (OnPlaybackModeChangedListener l : modeListeners) {
+            l.onPlaybackModeChanged(playbackMode);
         }
     }
 
     public void cyclePlaybackMode() {
         switch (playbackMode) {
-            case REPEAT_ALL:
-                playbackMode = PlaybackMode.REPEAT_ONE;
-                break;
-            case REPEAT_ONE:
-                playbackMode = PlaybackMode.SHUFFLE;
-                break;
-            case SHUFFLE:
-                playbackMode = PlaybackMode.REPEAT_NONE;
-                break;
-            case REPEAT_NONE:
-                playbackMode = PlaybackMode.REPEAT_ALL;
-                break;
+            case REPEAT_ALL: playbackMode = PlaybackMode.REPEAT_ONE; break;
+            case REPEAT_ONE: playbackMode = PlaybackMode.SHUFFLE; break;
+            case SHUFFLE: playbackMode = PlaybackMode.REPEAT_NONE; break;
+            case REPEAT_NONE: playbackMode = PlaybackMode.REPEAT_ALL; break;
         }
+        applyPlaybackMode();
         notifyPlaybackModeChanged();
     }
+
     public void setPlaybackMode(PlaybackMode mode) {
-        this.playbackMode = mode;
+        playbackMode = mode;
+        applyPlaybackMode();
         notifyPlaybackModeChanged();
     }
 
@@ -505,41 +492,32 @@ public class PlayerManager {
     }
 
     public void destroyEverything() {
-        // 1. Stop and release the MediaPlayer
-        if (mediaPlayer != null) {
-            if (mediaPlayer.isPlaying()) {
-                mediaPlayer.stop();
-            }
-            mediaPlayer.release();
-            mediaPlayer = null;
+        releasePlayer();
+        if (mediaSession != null) {
+            mediaSession.release();
+            mediaSession = null;
         }
-        isPlaying = false;
-
-        // 2. Abandon audio focus
-        abandonAudioFocus();
-
-        // 3. Release wake lock
-        releaseWakeLock();
-
-        // 4. Stop the service (This removes the notification)
         stopService();
-
-        // 5. Clear the queue and state
         queue = null;
         currentIndex = -1;
     }
+
     public void setCurrentSong(Song song, List<Song> queue) {
         setQueue(queue);
-        this.currentIndex = queue.indexOf(song);
+        currentIndex = queue.indexOf(song);
+        if (currentIndex < 0) return;
 
-        // Pass 'false' to prepare the song and update UI, but DO NOT play it
-        prepareAndPlay(song, false);
-    }
-    public int getCurrentIndex() {
-        return currentIndex;
+        buildPlayer();
+        List<MediaItem> items = new ArrayList<>();
+        for (Song s : queue) items.add(createMediaItem(s));
+        player.setMediaItems(items, currentIndex, 0);
+        applyPlaybackMode();
+        player.prepare();
+        updateCurrentSongMetadata();
+        notifySongChanged();
+        updateServiceNotification();
     }
 
-    public List<Song> getQueue() {
-        return queue;
-    }
+    public int getCurrentIndex() { return currentIndex; }
+    public List<Song> getQueue() { return queue; }
 }

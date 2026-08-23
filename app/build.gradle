@@ -45,7 +45,14 @@ dependencies {
     androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
     debugImplementation 'androidx.compose.ui:ui-tooling'
-    implementation "androidx.media:media:1.7.0"
+    // Media3 ExoPlayer (The new MediaPlayer)
+    implementation "androidx.media3:media3-exoplayer:1.4.1"
+
+    // Media3 Session (The new MediaSession)
+    implementation "androidx.media3:media3-session:1.4.1"
+
+    // Media3 UI (Optional, but good for future)
+    implementation "androidx.media3:media3-ui:1.4.1"
     // Room Database
     implementation "androidx.room:room-runtime:2.6.1"
     annotationProcessor "androidx.room:room-compiler:2.6.1"
