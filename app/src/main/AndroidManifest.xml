@@ -21,7 +21,7 @@
         android:label="Meusic"
         android:theme="@style/Theme.first_app.DarkBlue" >
         <service
-            android:name=".PlaybackService"
+            android:name=".services.PlaybackService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" >
             <intent-filter>
@@ -29,7 +29,7 @@
             </intent-filter>
         </service>
         <activity
-            android:name=".MainActivity"
+            android:name=".activities.MainActivity"
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,27 +38,27 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".AllSongsActivity"
+            android:name=".activities.AllSongsActivity"
             android:exported="false"
             android:label="@string/title_activity_all_songs"
             android:theme="@style/Theme.first_app.DarkBlue"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".SearchActivity"
+            android:name=".activities.SearchActivity"
             android:windowSoftInputMode="adjustPan" />
         <activity
-            android:name=".DetailSongsActivity"
+            android:name=".activities.DetailSongsActivity"
             android:exported="false" />
         <activity
-            android:name=".FavouriteActivity"
+            android:name=".activities.FavouriteActivity"
             android:exported="false"
             />
-        <activity android:name=".PlaylistActivity"
+        <activity android:name=".activities.PlaylistActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustPan"/>
-        <activity android:name=".PlaylistDetailActivity"
+        <activity android:name=".activities.PlaylistDetailActivity"
             android:exported="false" />
-        <activity android:name=".SettingsActivity"
+        <activity android:name=".activities.SettingsActivity"
             android:exported="false" />
     </application>
 
