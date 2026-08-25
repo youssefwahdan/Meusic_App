@@ -346,6 +346,8 @@ public class MusicLibrary {
                 "Date Added DESC"
         };
 
+        AppStateManager.getInstance(context).restoreSortState(this);
+
         // 1. Create the Builder
         AlertDialog.Builder builder = new AlertDialog.Builder(context)
                 .setTitle("Sort Songs By")

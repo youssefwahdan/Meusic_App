@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AppStateManager {
+
+    private static AppStateManager instance;
     private static final String PREFS_NAME = "app_state_prefs";
     private static final String KEY_PLAY_MODE = "playback_mode";
     private static final String KEY_INDEX = "current_index";
@@ -16,6 +18,13 @@ public class AppStateManager {
     private static final String KEY_SORT_MODE = "sort_index";
 
     private final SharedPreferences prefs;
+
+    public static synchronized AppStateManager getInstance(Context context) {
+        if (instance == null) {
+            instance = new AppStateManager(context);
+        }
+        return instance;
+    }
 
     public AppStateManager(Context context) {
         prefs = context.getApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -50,6 +59,8 @@ public class AppStateManager {
         int sortIndex = prefs.getInt(KEY_SORT_MODE, -1);
         if (sortIndex != -1) {
             musicLibrary.setCurrentSortIndex(sortIndex);
+        } else {
+            musicLibrary.setCurrentSortIndex(0);
         }
     }
 
