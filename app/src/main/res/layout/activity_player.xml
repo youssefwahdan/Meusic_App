@@ -155,9 +155,9 @@
         app:layout_constraintEnd_toEndOf="@id/art_container"
         app:layout_constraintStart_toStartOf="@id/art_container"
         android:thumbTint="@color/primary"
+        android:progressTint="@color/primary"
         android:foregroundTint="@color/primaryBackground"
         android:progressBackgroundTint="@color/primaryForeground"
-        android:progressTint="@color/primary"
         />
 
     <!-- 2. Current Time -->

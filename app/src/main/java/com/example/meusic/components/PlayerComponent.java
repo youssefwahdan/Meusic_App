@@ -1,7 +1,10 @@
 package com.example.meusic.components;
 
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.MediaStore;
@@ -14,15 +17,17 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.constraintlayout.motion.widget.MotionLayout;
+import androidx.core.graphics.drawable.DrawableCompat;
 
 import com.example.meusic.R;
 import com.example.meusic.managers.FavoriteManager;
 import com.example.meusic.managers.PlayerManager;
+import com.example.meusic.managers.ThemeManager;
 import com.example.meusic.models.Song;
 
 import jp.wasabeef.blurry.Blurry;
 
-public class PlayerComponent implements PlayerManager.PlayerStateListener , PlayerManager.OnPlaybackModeChangedListener {
+public class PlayerComponent implements PlayerManager.PlayerStateListener , PlayerManager.OnPlaybackModeChangedListener, ThemeManager.PrimaryColorListener {
     private MotionLayout motionLayout;
     private PlayerManager playerManager;
 
@@ -211,6 +216,14 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener , Play
                 }
             });
         }
+        ThemeManager.getInstance(motionLayout.getContext()).addPrimaryColorListener(this);
+    }
+
+    @Override
+    public void onPrimaryColorChangeListener(int color) {
+        seekBar.getThumb().setColorFilter(color, PorterDuff.Mode.SRC_IN);
+        seekBar.getProgressDrawable().setColorFilter(color, PorterDuff.Mode.SRC_IN);
+
     }
 
     // --- PlayerStateListener Implementations ---
