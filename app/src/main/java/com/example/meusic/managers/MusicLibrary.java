@@ -146,6 +146,8 @@ public class MusicLibrary {
         // Start fetching on background thread
         isLoading = true;
 
+        AppStateManager.getInstance(context).restoreSortState(this);
+
         new Thread(() -> {
             try {
                 List<Song> fetchedSongs = fetchAllSongsFromDevice(context);
@@ -346,9 +348,6 @@ public class MusicLibrary {
                 "Date Added DESC"
         };
 
-        AppStateManager.getInstance(context).restoreSortState(this);
-
-        // 1. Create the Builder
         AlertDialog.Builder builder = new AlertDialog.Builder(context)
                 .setTitle("Sort Songs By")
                 .setSingleChoiceItems(sortOptions, currentSortIndex, (dialog, which) -> {
@@ -356,21 +355,14 @@ public class MusicLibrary {
                     sortSongs(which);
                     dialog.dismiss();
                 });
-//                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
 
-        // 2. Create the Dialog object
         AlertDialog dialog = builder.create();
-        // 3. Apply the rounded background
         dialog.getWindow().setBackgroundDrawableResource(R.drawable.rounded_dialog_bg);
-        // 4. Show the dialog
         dialog.show();
-        // 1. Get the screen width
         int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
 
-        // 2. Calculate the dialog width (e.g., 0.90 = 90% of the screen)
         int dialogWidth = (int) (screenWidth * 0.90);
 
-        // 3. Apply the width and set height to wrap content
         dialog.getWindow().setLayout(dialogWidth, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
     }
 
