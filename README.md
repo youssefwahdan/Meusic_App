@@ -77,38 +77,33 @@ A modern, feature-rich Android music player built with Java and Android Jetpack 
 ## 📁 Project Structure
 ```
 app/
-├── java/com/example/first_app/
-│   ├── Activities/
-│   │   ├── AllSongsActivity.java
-│   │   ├── MainActivity.java
-│   │   ├── PlaylistDetailActivity.java
+├── java/com/example/meusic/
+│   ├── activities/
 │   │   └── ...
-│   ├── Fragments/
-│   │   ├── SongsFragment.java
-│   │   ├── ArtistsFragment.java
-│   │   ├── AlbumsFragment.java
+│   ├── adapters/
 │   │   └── ...
-│   ├── Adapters/
-│   │   ├── SongAdapter.java
-│   │   ├── PlaylistAdapter.java
+│   ├── components/
 │   │   └── ...
-│   ├── Database/
-│   │   ├── AppDatabase.java
-│   │   ├── FavoriteDao.java
-│   │   ├── PlaylistDao.java
+│   ├── database/
+|   |   ├── entities/
+|   |   |   └── ...
+|   |   └── ...
+│   ├── dialogs/
 │   │   └── ...
-│   ├── Managers/
-│   │   ├── PlayerManager.java
-│   │   ├── MusicLibrary.java
-│   │   └── FavoriteManager.java
-│   └── Models/
-│       ├── Song.java
-│       ├── Playlist.java
+│   ├── fragments/
+│   │   └── ...
+│   ├── managers/
+|   |   └── ...
+│   ├── models/
+│   |   └── ...
+│   └── services/
 │       └── ...
 └── res/
-    ├── layout/
     ├── drawable/
-    └── values/
+    ├── layout/
+    ├── menu/
+    ├── values/
+    └── xml/
 ```
 
 ## ⚠️ Disclaimer
