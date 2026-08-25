@@ -348,5 +348,6 @@ public class PlayerComponent implements PlayerManager.PlayerStateListener , Play
     public void detach() {
         playerManager.removeListener(this);
         PlayerManager.getInstance().removeModeListener(this);
+        ThemeManager.getInstance(motionLayout.getContext()).removePrimaryColorListener(this);
     }
 }
