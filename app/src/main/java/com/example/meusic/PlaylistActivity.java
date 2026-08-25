@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,7 +32,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PlaylistActivity extends AppCompatActivity {
+public class PlaylistActivity extends AppCompatActivity implements ThemeManager.PrimaryColorListener {
     private Toolbar toolbar;
     private RecyclerView recyclerView;
     private TextView emptyText;
@@ -40,6 +41,7 @@ public class PlaylistActivity extends AppCompatActivity {
     private List<PlaylistEntity> playlistList = new ArrayList<>();
     private MotionLayout motionLayout;
     private PlayerComponent playerComponent;
+    private ImageView addIcon;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,6 +64,7 @@ public class PlaylistActivity extends AppCompatActivity {
         // 1. Initialize PlayerManager globally
         PlayerManager.getInstance().init(this);
 
+        addIcon = findViewById(R.id.add_image);
 
         // 2. Initialize the reusable Player Component
         motionLayout = findViewById(R.id.music_player_motionLayout);
@@ -105,7 +108,15 @@ public class PlaylistActivity extends AppCompatActivity {
                 }
             }
         });
+
+        ThemeManager.getInstance(this).addPrimaryColorListener(this);
     }
+
+    @Override
+    public void onPrimaryColorChangeListener(int color) {
+        addIcon.setColorFilter(color);
+    }
+
     private void showCreatePlaylistDialog() {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_create_playlist,null);
 

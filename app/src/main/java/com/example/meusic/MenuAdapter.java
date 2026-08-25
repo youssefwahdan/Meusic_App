@@ -1,4 +1,5 @@
 package com.example.meusic;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,18 +13,20 @@ import com.example.meusic.R;
 
 import java.util.List;
 
-public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
+public class  MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
 
     private List<MenuItem> menuItems;
     private OnItemClickListener clickListener;
+    private Context appContext;
 
     // 2. Define the Interface
     public interface OnItemClickListener {
         void onItemClick(MenuItem item, int position);
     }
-    public MenuAdapter(List<MenuItem> menuItems, OnItemClickListener listener) {
+    public MenuAdapter(Context context, List<MenuItem> menuItems, OnItemClickListener listener) {
         this.menuItems = menuItems;
         this.clickListener = listener;
+        this.appContext = context;
     }
 
 
@@ -40,7 +43,8 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
 
         // Set Icon and tint it red (matching your image)
         holder.icon.setImageResource(item.getIconResId());
-        holder.icon.setColorFilter(ContextCompat.getColor(holder.itemView.getContext(), R.color.brand_red)); // Define this color in colors.xml
+        int primaryColor = ThemeManager.getInstance(appContext).getPrimaryColor();
+        holder.icon.setColorFilter(primaryColor); // Define this color in colors.xml
 
         // Set Texts
         holder.title.setText(item.getTitle());

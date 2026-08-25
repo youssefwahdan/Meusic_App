@@ -28,9 +28,8 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
 
     private final List<SongOptionItem> songOptions = new ArrayList<>();
 
-    private OnSongClickListener listener; // 1. Add listener
+    private OnSongClickListener listener;
 
-    // 2. Define the Interface
     public interface OnSongClickListener {
         void onSongClick(Song song, int position);
     }

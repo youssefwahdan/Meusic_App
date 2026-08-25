@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -21,7 +22,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ThemeManager.PrimaryColorListener {
     private static final int AUDIO_PERMISSION_REQUEST_CODE = 1001;
     protected Toolbar toolbar;
     private MotionLayout motionLayout;
@@ -29,6 +30,11 @@ public class MainActivity extends AppCompatActivity {
     private MenuAdapter adapter;
     private List<MenuItem> menuList;
     private AppStateManager stateManager;
+
+    @Override
+    public void onPrimaryColorChangeListener(int color) {
+        adapter.notifyDataSetChanged();
+    }
 
     private final MusicLibrary.OnSongsLoadedListener songsListener = new MusicLibrary.OnSongsLoadedListener() {
         @Override
@@ -98,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
         menuList.add(new MenuItem(R.drawable.ic_favorite, "Favourite", "0 songs"));
 //        menuList.add(new MenuItem(R.drawable.ic_recent, "Recently played", "644 songs"));
         menuList.add(new MenuItem(R.drawable.ic_settings, "Settings", ""));
-        adapter = new MenuAdapter(menuList, new MenuAdapter.OnItemClickListener() {
+        adapter = new MenuAdapter(this, menuList, new MenuAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(MenuItem item, int position) {
                 // 2. THIS IS WHERE YOU HANDLE THE CLICK!
@@ -119,6 +125,8 @@ public class MainActivity extends AppCompatActivity {
         MusicLibrary.getInstance().loadSongs(this, songsListener);
         MusicLibrary.getInstance().getFavouritesCount(this, this, favouritesListener);
         MusicLibrary.getInstance().getPlaylistsCount(this, this, playlistslistener);
+
+        ThemeManager.getInstance(this).addPrimaryColorListener(this);
 
     }
 
@@ -147,16 +155,11 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(favouriteIntent);
                 break;
 
-            case 5:
+            case 3:
                 // "Settings" clicked
-                Toast.makeText(this, "Opening Settings...", Toast.LENGTH_SHORT).show();
-                // Intent intent = new Intent(this, SettingsActivity.class);
-                // startActivity(intent);
-                break;
-
-            default:
-                // Fallback
-                Toast.makeText(this, "Clicked: " + item.getTitle(), Toast.LENGTH_SHORT).show();
+//                Toast.makeText(this, "Opening Settings...", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
                 break;
         }}
     protected void setupToolbar() {
@@ -172,6 +175,9 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -201,6 +207,7 @@ public class MainActivity extends AppCompatActivity {
         if (playerComponent != null) {
             playerComponent.detach();
         }
+        ThemeManager.getInstance(this).removePrimaryColorListener(this);
         savePlayerState();
     }
     private void savePlayerState() {

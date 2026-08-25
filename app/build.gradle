@@ -59,4 +59,5 @@ dependencies {
 
     // LiveData (for observing database changes)
     implementation "androidx.lifecycle:lifecycle-livedata:2.7.0"
+    implementation 'com.jaredrummler:colorpicker:1.1.0'
 }

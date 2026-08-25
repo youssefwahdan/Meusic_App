@@ -21,13 +21,14 @@ import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
 
-public class AllSongsActivity extends AppCompatActivity {
+public class AllSongsActivity extends AppCompatActivity implements ThemeManager.PrimaryColorListener{
 
     private TabLayout tabLayout;
     private ViewPager2 viewPager;
     private Toolbar toolbar;
     private MotionLayout motionLayout;
     private PlayerComponent playerComponent;
+    private TabLayoutMediator tabLayoutMediator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +62,17 @@ public class AllSongsActivity extends AppCompatActivity {
         motionLayout = findViewById(R.id.music_player_motionLayout);
         playerComponent = new PlayerComponent(motionLayout, PlayerManager.getInstance());
 
+        ThemeManager.getInstance(this).addPrimaryColorListener(this);
+    }
+
+    private void updateTabLayoutPrimaryColor(int color) {
+        tabLayout.setSelectedTabIndicatorColor(color);
+        tabLayout.setTabTextColors(Color.argb(180, 255, 255, 255), color);
+        tabLayout.setBackgroundColor(Color.TRANSPARENT);
+    }
+    @Override
+    public void onPrimaryColorChangeListener(int color) {
+        updateTabLayoutPrimaryColor(color);
     }
 
     @Override
@@ -80,6 +92,7 @@ public class AllSongsActivity extends AppCompatActivity {
         if (playerComponent != null) {
             playerComponent.detach();
         }
+        ThemeManager.getInstance(this).removePrimaryColorListener(this);
     }
 
     @Override
@@ -115,13 +128,14 @@ public class AllSongsActivity extends AppCompatActivity {
         viewPager.setAdapter(new AllSongsPagerAdapter(this));
 
         // Link TabLayout with ViewPager2 so swiping updates tabs and clicking tabs swipes
-        new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
+        tabLayoutMediator = new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
             switch (position) {
                 case 0: tab.setText("Songs"); break;
                 case 1: tab.setText("Artists"); break;
                 case 2: tab.setText("Albums"); break;
             }
-        }).attach();
+        });
+        tabLayoutMediator.attach();
     }
     protected void setupToolbar() {
         toolbar = findViewById(R.id.toolbar);
