@@ -77,38 +77,33 @@ A modern, feature-rich Android music player built with Java and Android Jetpack 
 ## 📁 Project Structure
 ```
 app/
-├── java/com/example/first_app/
-│   ├── Activities/
-│   │   ├── AllSongsActivity.java
-│   │   ├── MainActivity.java
-│   │   ├── PlaylistDetailActivity.java
+├── java/com/example/meusic/
+│   ├── activities/
 │   │   └── ...
-│   ├── Fragments/
-│   │   ├── SongsFragment.java
-│   │   ├── ArtistsFragment.java
-│   │   ├── AlbumsFragment.java
+│   ├── adapters/
 │   │   └── ...
-│   ├── Adapters/
-│   │   ├── SongAdapter.java
-│   │   ├── PlaylistAdapter.java
+│   ├── components/
 │   │   └── ...
-│   ├── Database/
-│   │   ├── AppDatabase.java
-│   │   ├── FavoriteDao.java
-│   │   ├── PlaylistDao.java
+│   ├── database/
+|   |   ├── entities/
+|   |   |   └── ...
+|   |   └── ...
+│   ├── dialogs/
 │   │   └── ...
-│   ├── Managers/
-│   │   ├── PlayerManager.java
-│   │   ├── MusicLibrary.java
-│   │   └── FavoriteManager.java
-│   └── Models/
-│       ├── Song.java
-│       ├── Playlist.java
+│   ├── fragments/
+│   │   └── ...
+│   ├── managers/
+|   |   └── ...
+│   ├── models/
+│   |   └── ...
+│   └── services/
 │       └── ...
 └── res/
-    ├── layout/
     ├── drawable/
-    └── values/
+    ├── layout/
+    ├── menu/
+    ├── values/
+    └── xml/
 ```
 
 ## ⚠️ Disclaimer
@@ -135,7 +130,7 @@ Youssef Khaled - [youssefwahdan](https://github.com/youssefwahdan)
 ### Latest Release (v1.2.0)
 [![Download APK](https://img.shields.io/badge/Download-APK-brightgreen.svg?style=for-the-badge&logo=android)](https://github.com/youssefwahdan/Meusic_App/releases/latest/download/Meusic.v1.2.0.apk)
 
-**Direct Download:** [Meusic.apk](https://github.com/youssefwahdan/Meusic_App/releases/edit/V1.2.0/Meusic.v1.2.0.apk)
+**Direct Download:** [Meusic.apk](https://github.com/youssefwahdan/Meusic_App/releases/edit/v1.2.0/Meusic.v1.2.0.apk)
 
 ### Installation Instructions
 1. Download the APK file
